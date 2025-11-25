@@ -1,7 +1,7 @@
 package model;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Shipment {
@@ -10,18 +10,25 @@ public class Shipment {
     private String origin;
     private String destination;
     private String description;
-    private ShipmentStatus status;
-    private final LocalDateTime createdAt;
-    private final List<Event> events = new ArrayList<>();
+    private String status; // no ShipmentStatus enum anymore
+    private Date dispatchDate;
+    private Date deliveryDate;
 
+    private final List<Document> documents = new ArrayList<>();
+    private final List<Event> history = new ArrayList<>();
+
+    // ✅ this is the constructor Shipper.createShipment(...) expects:
     public Shipment(String shipmentId, String origin, String destination, String description) {
         this.shipmentId = shipmentId;
         this.origin = origin;
         this.destination = destination;
         this.description = description;
-        this.status = ShipmentStatus.CREATED;
-        this.createdAt = LocalDateTime.now();
+        this.status = "CREATED";
+        this.dispatchDate = new Date(); // when created
+        addHistoryEvent("Shipment created: " + description);
     }
+
+    // --- core getters/setters ---
 
     public String getShipmentId() {
         return shipmentId;
@@ -51,23 +58,54 @@ public class Shipment {
         this.description = description;
     }
 
-    public ShipmentStatus getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(ShipmentStatus status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public Date getDispatchDate() {
+        return dispatchDate;
     }
 
-    public List<Event> getEvents() {
-        return events;
+    public void setDispatchDate(Date dispatchDate) {
+        this.dispatchDate = dispatchDate;
     }
 
-    public void addEvent(Event event) {
-        this.events.add(event);
+    public Date getDeliveryDate() {
+        return deliveryDate;
+    }
+
+    public void setDeliveryDate(Date deliveryDate) {
+        this.deliveryDate = deliveryDate;
+    }
+
+    public List<Document> getDocuments() {
+        return documents;
+    }
+
+    public List<Event> getHistory() {
+        return history;
+    }
+
+    // ✅ PUBLIC so Shipper can call it
+    public void addHistoryEvent(String message) {
+        history.add(new Event(new Date(), message));
+    }
+
+    // small helpers if you ever want them
+    public void addDocument(Document document) {
+        if (document != null) {
+            documents.add(document);
+            addHistoryEvent("Document added: " + document.getName());
+        }
+    }
+
+    public void confirmDelivery() {
+        this.status = "DELIVERED";
+        this.deliveryDate = new Date();
+        addHistoryEvent("Shipment marked as DELIVERED");
     }
 }

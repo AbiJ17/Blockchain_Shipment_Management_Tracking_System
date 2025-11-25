@@ -1,50 +1,92 @@
 package external;
 
-import model.Event;
-import model.Shipment;
-import model.ShipmentStatus;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Simulates the underlying blockchain network.
- * In a real system this would talk to actual nodes.
+ * Very simple in-memory blockchain stub.
+ * It just keeps a list of String "entries" that represent transactions/blocks.
+ * This is enough to support the controllers + gateway and to demonstrate the
+ * design patterns in your project.
  */
 public class BlockchainNetwork {
 
-    private final Map<String, Shipment> shipments = new HashMap<>();
-    private final Map<String, List<Event>> eventsByShipment = new HashMap<>();
+    private final List<String> ledger = new ArrayList<>();
+    private boolean connected = false;
 
-    public void storeShipment(Shipment shipment) {
-        shipments.put(shipment.getShipmentId(), shipment);
-        eventsByShipment.put(shipment.getShipmentId(), new ArrayList<>());
-        System.out.println("[BlockchainNetwork] Stored shipment " + shipment.getShipmentId());
+    /** Connect to the (simulated) blockchain network. */
+    public boolean connect() {
+        connected = true;
+        return true;
     }
 
-    public void storeEvent(Event event) {
-        List<Event> list = eventsByShipment
-                .computeIfAbsent(event.getShipmentId(), k -> new ArrayList<>());
-        list.add(event);
+    /** Disconnect from the (simulated) blockchain network. */
+    public void disconnect() {
+        connected = false;
+    }
 
-        Shipment shipment = shipments.get(event.getShipmentId());
-        if (shipment != null) {
-            shipment.setStatus(event.getStatus());
-            shipment.addEvent(event);
+    public boolean isConnected() {
+        return connected;
+    }
+
+    /**
+     * Store a new transaction/block entry on the ledger.
+     * In reality this would include consensus, validation, etc.
+     */
+    public boolean storeTransaction(String data) {
+        if (!connected) {
+            return false;
+        }
+        ledger.add(data);
+        return true;
+    }
+
+    /**
+     * Basic "block validation" stub.
+     * For now we just check that we're connected and the hash string is not empty.
+     */
+    public boolean validateBlock(String blockHash) {
+        if (!connected) {
+            return false;
+        }
+        return blockHash != null && !blockHash.trim().isEmpty();
+    }
+
+    /**
+     * Old helper used earlier: read a single ledger entry by index.
+     * Kept for compatibility.
+     */
+    public String queryLedger(int index) {
+        if (index < 0 || index >= ledger.size()) {
+            return null;
+        }
+        return ledger.get(index);
+    }
+
+    /**
+     * New helper used by the gateway / controllers:
+     * return all ledger entries that contain the given shipmentId.
+     */
+    public List<String> queryLedger(String shipmentId) {
+        if (!connected) {
+            return Collections.emptyList();
+        }
+        if (shipmentId == null || shipmentId.isEmpty()) {
+            return Collections.emptyList();
         }
 
-        System.out.println("[BlockchainNetwork] Stored event " + event.getEventId()
-                + " for shipment " + event.getShipmentId());
+        List<String> matches = new ArrayList<>();
+        for (String entry : ledger) {
+            if (entry != null && entry.contains(shipmentId)) {
+                matches.add(entry);
+            }
+        }
+        return matches;
     }
 
-    public Shipment findShipmentById(String shipmentId) {
-        return shipments.get(shipmentId);
-    }
-
-    public List<Event> findEventsByShipmentId(String shipmentId) {
-        return eventsByShipment.getOrDefault(shipmentId, Collections.emptyList());
-    }
-
-    public Map<String, Shipment> getAllShipments() {
-        return Collections.unmodifiableMap(shipments);
+    /** Expose a copy of the whole ledger (read-only). */
+    public List<String> getLedgerSnapshot() {
+        return new ArrayList<>(ledger);
     }
 }

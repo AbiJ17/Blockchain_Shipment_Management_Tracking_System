@@ -1,42 +1,67 @@
 package gateway;
 
 import external.BlockchainNetwork;
-import model.Event;
-import model.Shipment;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Gateway that the application uses to talk to the BlockchainNetwork.
- * This is your GRASP Indirection layer.
+ * Gateway / Indirection layer between controllers and the external
+ * BlockchainNetwork.
+ * This applies the GRASP Indirection pattern and hides low-level blockchain
+ * details
+ * from the rest of the system.
  */
 public class BlockchainNetworkGateway {
 
     private final BlockchainNetwork blockchainNetwork;
+    private boolean connected = false;
 
     public BlockchainNetworkGateway(BlockchainNetwork blockchainNetwork) {
         this.blockchainNetwork = blockchainNetwork;
     }
 
-    public String writeShipment(Shipment shipment) {
-        blockchainNetwork.storeShipment(shipment);
-        return shipment.getShipmentId();
+    /** Open connection to the blockchain network. */
+    public boolean connect() {
+        connected = blockchainNetwork.connect();
+        return connected;
     }
 
-    public void recordEvent(Event event) {
-        blockchainNetwork.storeEvent(event);
+    /** Send a transaction string to the blockchain. */
+    public boolean sendTransaction(String data) {
+        if (!connected) {
+            return false;
+        }
+        return blockchainNetwork.storeTransaction(data);
     }
 
-    public Shipment getShipment(String shipmentId) {
-        return blockchainNetwork.findShipmentById(shipmentId);
+    /**
+     * Query ledger entries related to a shipment.
+     * Each entry is currently just a String; controllers decide how to interpret
+     * it.
+     */
+    public List<String> queryLedger(String shipmentId) {
+        if (!connected) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(blockchainNetwork.queryLedger(shipmentId));
     }
 
-    public List<Event> getEvents(String shipmentId) {
-        return blockchainNetwork.findEventsByShipmentId(shipmentId);
+    /** Validate a block (very simple stub). */
+    public boolean validateBlock(String blockHash) {
+        if (!connected) {
+            return false;
+        }
+        return blockchainNetwork.validateBlock(blockHash);
     }
 
-    public Map<String, Shipment> getAllShipments() {
-        return blockchainNetwork.getAllShipments();
+    /** Disconnect from the blockchain. */
+    public void disconnect() {
+        blockchainNetwork.disconnect();
+        connected = false;
+    }
+
+    public boolean isConnected() {
+        return connected;
     }
 }

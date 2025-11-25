@@ -1,40 +1,27 @@
 package model;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 public class Event {
 
-    private final String eventId;
-    private final String shipmentId;
-    private final ShipmentStatus status;
-    private final String description;
-    private final LocalDateTime timestamp;
+    private final Date timestamp;
+    private final String message;
 
-    public Event(String eventId, String shipmentId, ShipmentStatus status, String description) {
-        this.eventId = eventId;
-        this.shipmentId = shipmentId;
-        this.status = status;
-        this.description = description;
-        this.timestamp = LocalDateTime.now();
+    public Event(Date timestamp, String message) {
+        this.timestamp = timestamp;
+        this.message = message;
     }
 
-    public String getEventId() {
-        return eventId;
-    }
-
-    public String getShipmentId() {
-        return shipmentId;
-    }
-
-    public ShipmentStatus getStatus() {
-        return status;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public LocalDateTime getTimestamp() {
+    public Date getTimestamp() {
         return timestamp;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    @Override
+    public String toString() {
+        return "[" + timestamp + "] " + message;
     }
 }

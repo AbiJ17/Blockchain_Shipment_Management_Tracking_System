@@ -4,623 +4,607 @@ import controller.ShipmentComplianceController;
 import controller.ShipmentLifecycleController;
 import external.BlockchainNetwork;
 import external.OffChainStorage;
-import external.PaymentService;
 import gateway.BlockchainNetworkGateway;
 import gateway.OffChainStorageAdapter;
-import gateway.PaymentServiceAdapter;
 import model.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
- * Main blockchain console GUI.
+ * MainUI
+ * - Single console for all roles.
+ * - Left nav with rounded “block” buttons.
+ * - Center card area for each action.
+ * - Bottom activity log with terminal look.
  */
 public class MainUI extends JFrame {
 
-    private final ShipmentLifecycleController lifecycleController;
-    private final ShipmentComplianceController complianceController;
     private final User currentUser;
 
-    private JTextArea activityArea;
+    // Shared backend objects (passed from LoginFrame)
+    private final BlockchainNetwork blockchainNetwork;
+    private final BlockchainNetworkGateway blockchainGateway;
+    private final OffChainStorage offChainStorage;
+    private final OffChainStorageAdapter offChainAdapter;
+    private final SmartContract smartContract;
+    private final ShipmentLifecycleController lifecycleController;
+    private final ShipmentComplianceController complianceController;
 
-    // central cards
-    private JPanel contentCards;
-    private static final String CARD_CREATE = "create";
-    private static final String CARD_UPLOAD = "upload";
-    private static final String CARD_UPDATE = "update";
-    private static final String CARD_QUERY = "query";
+    // Swing components
+    private final CardLayout cardLayout = new CardLayout();
+    private final JPanel cardPanel = new JPanel(cardLayout);
+    private final JTextArea activityLogArea = new JTextArea();
 
-    // colors
-    private final Color bg = new Color(5, 8, 22);
-    private final Color sidebarBg = new Color(7, 14, 32);
-    private final Color cardBg = new Color(11, 18, 36);
-    private final Color cardInnerBg = new Color(13, 22, 44);
-    private final Color accent = new Color(40, 120, 255);
-    private final Color accentHover = new Color(70, 150, 255);
-    private final Color textPrimary = new Color(240, 244, 255);
-    private final Color textSecondary = new Color(160, 170, 190);
-    private final Font fontBody = new Font("Inter", Font.PLAIN, 13);
-    private final Font fontBold = new Font("Inter", Font.BOLD, 13);
+    // Create Shipment fields
+    private JTextField csOriginField;
+    private JTextField csDestinationField;
+    private JTextField csDescriptionField;
 
-    public MainUI(User user) {
+    // Upload Document fields
+    private JTextField udShipmentIdField;
+    private JTextField udDocNameField;
+    private JTextArea udContentArea;
+
+    // Update Status fields
+    private JTextField usShipmentIdField;
+    private JTextField usNewStatusField;
+
+    // Query / Audit fields
+    private JTextField qaShipmentIdField;
+    private JTextArea qaResultArea;
+
+    private final DateTimeFormatter logTimeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    public MainUI(
+            User user,
+            BlockchainNetwork blockchainNetwork,
+            BlockchainNetworkGateway blockchainGateway,
+            OffChainStorage offChainStorage,
+            OffChainStorageAdapter offChainAdapter,
+            SmartContract smartContract,
+            ShipmentLifecycleController lifecycleController,
+            ShipmentComplianceController complianceController) {
+
         this.currentUser = user;
+        this.blockchainNetwork = blockchainNetwork;
+        this.blockchainGateway = blockchainGateway;
+        this.offChainStorage = offChainStorage;
+        this.offChainAdapter = offChainAdapter;
+        this.smartContract = smartContract;
+        this.lifecycleController = lifecycleController;
+        this.complianceController = complianceController;
 
-        // wire components
-        BlockchainNetwork blockchainNetwork = new BlockchainNetwork();
-        OffChainStorage offChainStorage = new OffChainStorage();
-        PaymentService paymentService = new PaymentService();
-
-        BlockchainNetworkGateway networkGateway = new BlockchainNetworkGateway(blockchainNetwork);
-        OffChainStorageAdapter storageAdapter = new OffChainStorageAdapter(offChainStorage);
-        PaymentServiceAdapter paymentAdapter = new PaymentServiceAdapter(paymentService);
-
-        this.lifecycleController = new ShipmentLifecycleController(
-                networkGateway, storageAdapter, paymentAdapter);
-        this.complianceController = new ShipmentComplianceController(networkGateway);
-
-        initUI();
-    }
-
-    private void initUI() {
-        setTitle("Blockchain Shipment Tracking - " + currentUser.getUsername()
-                + " (" + currentUser.getRole() + ")");
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(1200, 720);
-        setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
-        getContentPane().setBackground(bg);
-
-        // sidebar, content, activity log
-        add(buildSidebar(), BorderLayout.WEST);
-        add(buildContentArea(), BorderLayout.CENTER);
-        add(buildActivityLog(), BorderLayout.SOUTH);
-
+        initFrame();
+        buildLayout();
         setVisible(true);
     }
 
-    // ---------- sidebar ----------
+    // ---------- Frame & base layout ----------
 
-    private JPanel buildSidebar() {
-        JPanel sidebar = new JPanel();
-        sidebar.setPreferredSize(new Dimension(270, 0));
-        sidebar.setBackground(sidebarBg);
-        sidebar.setLayout(new BorderLayout());
-        sidebar.setBorder(new EmptyBorder(20, 16, 16, 16));
+    private void initFrame() {
+        setTitle("Blockchain Shipment Tracking – " + currentUser.getUsername()
+                + " (" + currentUser.getRole() + ")");
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setSize(1280, 720);
+        setLocationRelativeTo(null);
+        setMinimumSize(new Dimension(1100, 650));
+    }
 
-        JPanel top = new JPanel();
-        top.setOpaque(false);
-        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+    private void buildLayout() {
+        // “Blockchain” dark-neon palette
+        Color bg = new Color(4, 9, 24);
+        Color navBg = new Color(8, 14, 34);
+        Color navButtonBg = new Color(15, 23, 42);
+        Color cardBg = new Color(10, 20, 48);
+        Color accent = new Color(56, 189, 248); // cyan
+        Color accentBorder = new Color(37, 99, 235); // indigo border
+        Color text = new Color(230, 235, 255);
+
+        JPanel root = new JPanel(new BorderLayout());
+        root.setBackground(bg);
+        setContentPane(root);
+
+        // ---------- Left navigation ----------
+        JPanel nav = new JPanel();
+        nav.setLayout(new BoxLayout(nav, BoxLayout.Y_AXIS));
+        nav.setBackground(navBg);
+        nav.setBorder(new EmptyBorder(20, 18, 20, 18));
+        nav.setPreferredSize(new Dimension(260, 0));
 
         JLabel title = new JLabel("Blockchain Console");
-        title.setFont(new Font("Inter", Font.BOLD, 20));
-        title.setForeground(textPrimary);
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        title.setForeground(text);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
 
-        JLabel loggedIn = new JLabel(
-                "<html><span style='font-size:11px;color:#A0AABE;'>Logged in as:<br>"
-                        + currentUser.getUsername() + " (" + currentUser.getRole() + ")</span></html>");
-        loggedIn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        loggedIn.setBorder(new EmptyBorder(10, 0, 10, 0));
+        JLabel loggedIn = new JLabel("Logged in as: " + currentUser.getUsername()
+                + " (" + currentUser.getRole() + ")");
+        loggedIn.setForeground(new Color(148, 163, 184));
+        loggedIn.setFont(loggedIn.getFont().deriveFont(12f));
 
-        top.add(title);
-        top.add(Box.createVerticalStrut(8));
-        top.add(loggedIn);
-        top.add(Box.createVerticalStrut(16));
+        nav.add(title);
+        nav.add(Box.createVerticalStrut(4));
+        nav.add(loggedIn);
+        nav.add(Box.createVerticalStrut(24));
 
-        JPanel menu = new JPanel();
-        menu.setOpaque(false);
-        menu.setLayout(new BoxLayout(menu, BoxLayout.Y_AXIS));
+        nav.add(createNavButton("Create Shipment", navButtonBg, accentBorder, e -> showCard("CREATE")));
+        nav.add(Box.createVerticalStrut(12));
+        nav.add(createNavButton("Upload Document", navButtonBg, accentBorder, e -> showCard("UPLOAD")));
+        nav.add(Box.createVerticalStrut(12));
+        nav.add(createNavButton("Update Status", navButtonBg, accentBorder, e -> showCard("STATUS")));
+        nav.add(Box.createVerticalStrut(12));
+        nav.add(createNavButton("Query / Audit", navButtonBg, accentBorder, e -> showCard("QUERY")));
+        nav.add(Box.createVerticalGlue());
+        nav.add(Box.createVerticalStrut(16));
 
-        JButton createBtn = createNavButton("Create Shipment");
-        JButton uploadBtn = createNavButton("Upload Document");
-        JButton updateBtn = createNavButton("Update Status");
-        JButton queryBtn = createNavButton("Query / Audit");
-        JButton logoutBtn = createSecondaryNavButton("Logout");
+        JButton logout = new JButton("Log out");
+        logout.setBackground(navButtonBg);
+        logout.setForeground(text);
+        logout.setFocusPainted(false);
+        logout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        logout.setAlignmentX(Component.LEFT_ALIGNMENT);
+        logout.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(accentBorder, 1, true),
+                new EmptyBorder(8, 18, 8, 18)));
+        logout.addActionListener(e -> doLogout());
+        nav.add(logout);
 
-        createBtn.addActionListener(e -> switchCard(CARD_CREATE));
-        uploadBtn.addActionListener(e -> switchCard(CARD_UPLOAD));
-        updateBtn.addActionListener(e -> switchCard(CARD_UPDATE));
-        queryBtn.addActionListener(e -> switchCard(CARD_QUERY));
-        logoutBtn.addActionListener(e -> {
-            dispose();
-            SwingUtilities.invokeLater(LoginFrame::new);
-        });
+        root.add(nav, BorderLayout.WEST);
 
-        menu.add(wrapInRoundedMenuPanel(createBtn));
-        menu.add(Box.createVerticalStrut(10));
-        menu.add(wrapInRoundedMenuPanel(uploadBtn));
-        menu.add(Box.createVerticalStrut(10));
-        menu.add(wrapInRoundedMenuPanel(updateBtn));
-        menu.add(Box.createVerticalStrut(10));
-        menu.add(wrapInRoundedMenuPanel(queryBtn));
-        menu.add(Box.createVerticalGlue());
+        // ---------- Center cards ----------
+        cardPanel.setBackground(bg);
+        cardPanel.setBorder(new EmptyBorder(24, 24, 8, 24));
 
-        JPanel bottom = new JPanel();
-        bottom.setOpaque(false);
-        bottom.setLayout(new BoxLayout(bottom, BoxLayout.Y_AXIS));
-        bottom.add(wrapInRoundedMenuPanel(logoutBtn));
+        cardPanel.add(buildCreateShipmentCard(cardBg, text, accent, accentBorder), "CREATE");
+        cardPanel.add(buildUploadDocumentCard(cardBg, text, accent, accentBorder), "UPLOAD");
+        cardPanel.add(buildUpdateStatusCard(cardBg, text, accent, accentBorder), "STATUS");
+        cardPanel.add(buildQueryAuditCard(cardBg, text, accent, accentBorder), "QUERY");
 
-        sidebar.add(top, BorderLayout.NORTH);
-        sidebar.add(menu, BorderLayout.CENTER);
-        sidebar.add(bottom, BorderLayout.SOUTH);
+        root.add(cardPanel, BorderLayout.CENTER);
 
-        return sidebar;
+        // ---------- Activity log ----------
+        JPanel logPanel = new JPanel(new BorderLayout());
+        logPanel.setBorder(new EmptyBorder(4, 18, 8, 18));
+        logPanel.setBackground(new Color(3, 7, 18));
+
+        JLabel logLabel = new JLabel("Activity Log");
+        logLabel.setForeground(new Color(148, 163, 184));
+        logLabel.setFont(logLabel.getFont().deriveFont(12f));
+
+        activityLogArea.setEditable(false);
+        activityLogArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        activityLogArea.setBackground(Color.BLACK);
+        activityLogArea.setForeground(new Color(45, 212, 191)); // teal terminal text
+        activityLogArea.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+        activityLogArea.setLineWrap(true);
+        activityLogArea.setWrapStyleWord(true);
+
+        JScrollPane logScroll = new JScrollPane(activityLogArea);
+        logScroll.setBorder(BorderFactory.createLineBorder(new Color(31, 41, 55)));
+
+        logPanel.add(logLabel, BorderLayout.NORTH);
+        logPanel.add(logScroll, BorderLayout.CENTER);
+        logPanel.setPreferredSize(new Dimension(0, 130));
+
+        root.add(logPanel, BorderLayout.SOUTH);
+
+        showCard("CREATE");
     }
 
-    private JPanel wrapInRoundedMenuPanel(JButton button) {
-        JPanel rounded = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(16, 24, 48)); // higher contrast than sidebar
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 18, 18);
-                g2.dispose();
-            }
-        };
-        rounded.setOpaque(false);
-        rounded.setLayout(new BorderLayout());
-        rounded.setBorder(new EmptyBorder(6, 10, 6, 10));
-        rounded.add(button, BorderLayout.CENTER);
-        return rounded;
-    }
-
-    private JButton createNavButton(String text) {
+    private JButton createNavButton(String text, Color bg, Color borderColor,
+            java.awt.event.ActionListener listener) {
         JButton btn = new JButton(text);
-        btn.setForeground(Color.WHITE);
-        btn.setBackground(new Color(16, 24, 48));
+        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btn.setForeground(new Color(226, 232, 255));
+        btn.setBackground(bg);
         btn.setFocusPainted(false);
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setFont(fontBold);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        btn.setHorizontalAlignment(SwingConstants.LEFT);
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(10, 18, 10, 18)));
+
+        btn.addActionListener(listener);
         return btn;
     }
 
-    private JButton createSecondaryNavButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setForeground(new Color(200, 90, 90));
-        btn.setBackground(new Color(16, 24, 48));
-        btn.setFocusPainted(false);
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setFont(fontBody);
-        return btn;
+    private void showCard(String name) {
+        cardLayout.show(cardPanel, name);
     }
 
-    // ---------- content area (tabs in the middle) ----------
-
-    private JPanel buildContentArea() {
-        contentCards = new JPanel(new CardLayout());
-        contentCards.setOpaque(false);
-        contentCards.setBorder(new EmptyBorder(30, 40, 10, 40));
-
-        contentCards.add(buildCreateShipmentCard(), CARD_CREATE);
-        contentCards.add(buildUploadCard(), CARD_UPLOAD);
-        contentCards.add(buildUpdateCard(), CARD_UPDATE);
-        contentCards.add(buildQueryCard(), CARD_QUERY);
-
-        // default card
-        switchCard(CARD_CREATE);
-
-        return contentCards;
+    private void log(String message) {
+        String ts = LocalDateTime.now().format(logTimeFormat);
+        activityLogArea.append("[" + ts + "] " + message + "\n");
+        activityLogArea.setCaretPosition(activityLogArea.getDocument().getLength());
     }
 
-    private void switchCard(String card) {
-        CardLayout cl = (CardLayout) contentCards.getLayout();
-        cl.show(contentCards, card);
+    // ---------- Create Shipment card ----------
+
+    private JComponent buildCreateShipmentCard(Color cardBg, Color text, Color accent, Color borderColor) {
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setOpaque(false);
+
+        JPanel card = new JPanel();
+        card.setBackground(cardBg);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(620, 280));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(28, 48, 28, 48)));
+
+        JLabel title = new JLabel("Create Shipment", SwingConstants.CENTER);
+        title.setForeground(text);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+
+        card.add(title);
+        card.add(Box.createVerticalStrut(18));
+
+        csOriginField = createLabeledField(card, "Origin", text, borderColor);
+        csDestinationField = createLabeledField(card, "Destination", text, borderColor);
+        csDescriptionField = createLabeledField(card, "Description", text, borderColor);
+
+        JButton createBtn = new JButton("Create Shipment");
+        createBtn.setForeground(Color.WHITE);
+        createBtn.setBackground(accent);
+        createBtn.setFocusPainted(false);
+        createBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        createBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        createBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
+        createBtn.addActionListener(e -> handleCreateShipment());
+
+        card.add(Box.createVerticalStrut(20));
+        card.add(createBtn);
+
+        outer.add(card);
+        return outer;
     }
 
-    private JPanel createRoundedCardPanel() {
-        JPanel card = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(cardBg);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 28, 28);
-                g2.dispose();
-            }
-        };
-        card.setOpaque(false);
-        card.setLayout(new BorderLayout());
-        card.setBorder(new EmptyBorder(30, 40, 30, 40));
-        return card;
-    }
+    private JTextField createLabeledField(JPanel container, String label,
+            Color textColor, Color borderColor) {
+        JLabel l = new JLabel(label);
+        l.setForeground(textColor);
+        container.add(l);
+        container.add(Box.createVerticalStrut(4));
 
-    private JTextField styledTextField() {
         JTextField field = new JTextField();
-        field.setBackground(cardInnerBg);
-        field.setForeground(textPrimary);
-        field.setCaretColor(textPrimary);
-        field.setFont(fontBody);
+        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+        field.setBackground(new Color(8, 14, 32));
+        field.setForeground(textColor);
+        field.setCaretColor(textColor);
         field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(28, 40, 72)),
-                new EmptyBorder(8, 10, 8, 10)));
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(4, 8, 4, 8)));
+
+        container.add(field);
+        container.add(Box.createVerticalStrut(10));
         return field;
     }
 
-    private JTextArea styledTextArea(int rows) {
-        JTextArea area = new JTextArea(rows, 20);
-        area.setLineWrap(true);
-        area.setWrapStyleWord(true);
-        area.setBackground(cardInnerBg);
-        area.setForeground(textPrimary);
-        area.setCaretColor(textPrimary);
-        area.setFont(fontBody);
-        area.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(28, 40, 72)),
-                new EmptyBorder(8, 10, 8, 10)));
-        return area;
+    private void handleCreateShipment() {
+        // Only shippers can create shipments
+        if (!(currentUser instanceof Shipper)) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Only SHIPPER role can create shipments.",
+                    "Not allowed",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String origin = csOriginField.getText().trim();
+        String destination = csDestinationField.getText().trim();
+        String description = csDescriptionField.getText().trim();
+
+        if (origin.isEmpty() || destination.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Origin and Destination are required.",
+                    "Missing data",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Shipper shipper = (Shipper) currentUser;
+
+        // Simple ID generator for the UI
+        String shipmentId = "S" + System.currentTimeMillis();
+
+        Shipment shipment = lifecycleController.createShipment(
+                shipper,
+                shipmentId,
+                origin,
+                destination,
+                description);
+
+        log("Shipment created: " + shipment.getShipmentId()
+                + " by " + currentUser.getUsername());
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Shipment created with ID: " + shipment.getShipmentId(),
+                "Created",
+                JOptionPane.INFORMATION_MESSAGE);
+
+        csOriginField.setText("");
+        csDestinationField.setText("");
+        csDescriptionField.setText("");
     }
 
-    private JButton primaryActionButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setForeground(Color.WHITE);
-        btn.setBackground(accent);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setOpaque(true);
-        btn.setFont(fontBold);
-        btn.setBorder(new EmptyBorder(10, 24, 10, 24));
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(accentHover);
-            }
+    // ---------- Upload Document card ----------
 
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(accent);
-            }
-        });
-        return btn;
-    }
+    private JComponent buildUploadDocumentCard(Color cardBg, Color text, Color accent, Color borderColor) {
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setOpaque(false);
 
-    // ---- specific cards ----
-
-    private JPanel buildCreateShipmentCard() {
-        JPanel outer = createRoundedCardPanel();
-
-        JPanel form = new JPanel(new GridBagLayout());
-        form.setOpaque(false);
-
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.weightx = 1;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.insets = new Insets(8, 0, 8, 0);
-
-        JLabel title = new JLabel("Create Shipment");
-        title.setForeground(textPrimary);
-        title.setFont(new Font("Inter", Font.BOLD, 22));
-
-        JTextField originField = styledTextField();
-        JTextField destField = styledTextField();
-        JTextField descField = styledTextField();
-
-        JButton createBtn = primaryActionButton("Create Shipment");
-
-        c.gridy = 0;
-        c.gridwidth = 2;
-        c.insets = new Insets(0, 0, 25, 0);
-        form.add(title, c);
-
-        c.gridwidth = 1;
-        c.insets = new Insets(4, 0, 2, 0);
-        c.gridy = 1;
-        form.add(label("Origin"), c);
-        c.gridy = 2;
-        c.insets = new Insets(0, 0, 10, 0);
-        form.add(originField, c);
-
-        c.gridy = 3;
-        c.insets = new Insets(4, 0, 2, 0);
-        form.add(label("Destination"), c);
-        c.gridy = 4;
-        c.insets = new Insets(0, 0, 10, 0);
-        form.add(destField, c);
-
-        c.gridy = 5;
-        c.insets = new Insets(4, 0, 2, 0);
-        form.add(label("Description"), c);
-        c.gridy = 6;
-        c.insets = new Insets(0, 0, 18, 0);
-        form.add(descField, c);
-
-        c.gridy = 7;
-        c.insets = new Insets(10, 0, 0, 0);
-        form.add(createBtn, c);
-
-        createBtn.addActionListener(e -> {
-            try {
-                String id = lifecycleController.createShipment(
-                        currentUser,
-                        originField.getText(),
-                        destField.getText(),
-                        descField.getText());
-                log("> Created shipment with ID: " + id);
-            } catch (Exception ex) {
-                showError(ex);
-            }
-        });
-
-        outer.add(form, BorderLayout.CENTER);
-        return outer;
-    }
-
-    private JPanel buildUploadCard() {
-        JPanel outer = createRoundedCardPanel();
-
-        JPanel form = new JPanel(new GridBagLayout());
-        form.setOpaque(false);
-
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.weightx = 1;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.insets = new Insets(8, 0, 8, 0);
+        JPanel card = new JPanel();
+        card.setBackground(cardBg);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(720, 340));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(28, 48, 28, 48)));
 
         JLabel title = new JLabel("Upload Document");
-        title.setForeground(textPrimary);
-        title.setFont(new Font("Inter", Font.BOLD, 22));
+        title.setForeground(text);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JTextField shipmentIdField = styledTextField();
-        JTextField nameField = styledTextField();
-        JTextArea contentArea = styledTextArea(6);
+        card.add(title);
+        card.add(Box.createVerticalStrut(18));
 
-        JButton uploadBtn = primaryActionButton("Upload Document");
+        udShipmentIdField = createLabeledField(card, "Shipment ID", text, borderColor);
+        udDocNameField = createLabeledField(card, "Document Name", text, borderColor);
 
-        c.gridy = 0;
-        c.gridwidth = 2;
-        c.insets = new Insets(0, 0, 25, 0);
-        form.add(title, c);
+        JLabel contentLabel = new JLabel("Content");
+        contentLabel.setForeground(text);
+        card.add(contentLabel);
+        card.add(Box.createVerticalStrut(4));
 
-        c.gridwidth = 1;
-        c.insets = new Insets(4, 0, 2, 0);
-        c.gridy = 1;
-        form.add(label("Shipment ID"), c);
-        c.gridy = 2;
-        c.insets = new Insets(0, 0, 10, 0);
-        form.add(shipmentIdField, c);
+        udContentArea = new JTextArea(5, 40);
+        udContentArea.setLineWrap(true);
+        udContentArea.setWrapStyleWord(true);
+        udContentArea.setBackground(new Color(8, 14, 32));
+        udContentArea.setForeground(text);
+        udContentArea.setCaretColor(text);
+        udContentArea.setBorder(new LineBorder(borderColor, 1, true));
 
-        c.gridy = 3;
-        c.insets = new Insets(4, 0, 2, 0);
-        form.add(label("Document Name"), c);
-        c.gridy = 4;
-        c.insets = new Insets(0, 0, 10, 0);
-        form.add(nameField, c);
+        JScrollPane contentScroll = new JScrollPane(udContentArea);
+        contentScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        contentScroll.setBorder(BorderFactory.createLineBorder(borderColor, 1, true));
+        card.add(contentScroll);
+        card.add(Box.createVerticalStrut(18));
 
-        c.gridy = 5;
-        c.insets = new Insets(4, 0, 2, 0);
-        form.add(label("Content"), c);
-        c.gridy = 6;
-        c.insets = new Insets(0, 0, 18, 0);
-        form.add(new JScrollPane(contentArea), c);
+        JButton uploadBtn = new JButton("Upload Document");
+        uploadBtn.setForeground(Color.WHITE);
+        uploadBtn.setBackground(accent);
+        uploadBtn.setFocusPainted(false);
+        uploadBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        uploadBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        uploadBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
+        uploadBtn.addActionListener(e -> handleUploadDocument());
 
-        c.gridy = 7;
-        c.insets = new Insets(10, 0, 0, 0);
-        form.add(uploadBtn, c);
-
-        uploadBtn.addActionListener(e -> {
-            try {
-                String docId = lifecycleController.uploadDocument(
-                        currentUser,
-                        shipmentIdField.getText(),
-                        nameField.getText(),
-                        contentArea.getText());
-                log("> Uploaded document with ID: " + docId);
-            } catch (Exception ex) {
-                showError(ex);
-            }
-        });
-
-        outer.add(form, BorderLayout.CENTER);
+        card.add(uploadBtn);
+        outer.add(card);
         return outer;
     }
 
-    private JPanel buildUpdateCard() {
-        JPanel outer = createRoundedCardPanel();
+    private void handleUploadDocument() {
+        String shipmentId = udShipmentIdField.getText().trim();
+        String docName = udDocNameField.getText().trim();
+        String content = udContentArea.getText();
 
-        JPanel form = new JPanel(new GridBagLayout());
-        form.setOpaque(false);
+        if (shipmentId.isEmpty() || docName.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Shipment ID and Document Name are required.",
+                    "Missing data",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.weightx = 1;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.insets = new Insets(8, 0, 8, 0);
+        Shipment shipment = lifecycleController.findShipmentById(shipmentId);
+        if (shipment == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Shipment not found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Document doc = lifecycleController.uploadDocument(shipment, docName, content);
+        offChainAdapter.connect();
+        offChainAdapter.uploadFile(doc);
+
+        log("Document '" + docName + "' uploaded for shipment " + shipmentId);
+        JOptionPane.showMessageDialog(this,
+                "Document uploaded and stored off-chain.",
+                "Uploaded",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // ---------- Update Status card ----------
+
+    private JComponent buildUpdateStatusCard(Color cardBg, Color text, Color accent, Color borderColor) {
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setOpaque(false);
+
+        JPanel card = new JPanel();
+        card.setBackground(cardBg);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(620, 280));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(28, 48, 28, 48)));
 
         JLabel title = new JLabel("Update Shipment Status");
-        title.setForeground(textPrimary);
-        title.setFont(new Font("Inter", Font.BOLD, 22));
+        title.setForeground(text);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JTextField shipmentIdField = styledTextField();
-        JComboBox<ShipmentStatus> statusCombo = new JComboBox<>(ShipmentStatus.values());
-        statusCombo.setBackground(cardInnerBg);
-        statusCombo.setForeground(textPrimary);
-        statusCombo.setFont(fontBody);
-        statusCombo.setBorder(new EmptyBorder(4, 6, 4, 6));
+        card.add(title);
+        card.add(Box.createVerticalStrut(18));
 
-        JTextField descField = styledTextField();
+        usShipmentIdField = createLabeledField(card, "Shipment ID", text, borderColor);
+        usNewStatusField = createLabeledField(card,
+                "New Status (e.g., IN_TRANSIT, DELIVERED)", text, borderColor);
 
-        JButton updateBtn = primaryActionButton("Update Status");
+        JButton updateBtn = new JButton("Update Status");
+        updateBtn.setForeground(Color.WHITE);
+        updateBtn.setBackground(accent);
+        updateBtn.setFocusPainted(false);
+        updateBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        updateBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        updateBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
+        updateBtn.addActionListener(e -> handleUpdateStatus());
 
-        c.gridy = 0;
-        c.gridwidth = 2;
-        c.insets = new Insets(0, 0, 25, 0);
-        form.add(title, c);
+        card.add(Box.createVerticalStrut(12));
+        card.add(updateBtn);
 
-        c.gridwidth = 1;
-        c.insets = new Insets(4, 0, 2, 0);
-        c.gridy = 1;
-        form.add(label("Shipment ID"), c);
-        c.gridy = 2;
-        c.insets = new Insets(0, 0, 10, 0);
-        form.add(shipmentIdField, c);
-
-        c.gridy = 3;
-        c.insets = new Insets(4, 0, 2, 0);
-        form.add(label("New Status"), c);
-        c.gridy = 4;
-        c.insets = new Insets(0, 0, 10, 0);
-        form.add(statusCombo, c);
-
-        c.gridy = 5;
-        c.insets = new Insets(4, 0, 2, 0);
-        form.add(label("Description"), c);
-        c.gridy = 6;
-        c.insets = new Insets(0, 0, 18, 0);
-        form.add(descField, c);
-
-        c.gridy = 7;
-        c.insets = new Insets(10, 0, 0, 0);
-        form.add(updateBtn, c);
-
-        updateBtn.addActionListener(e -> {
-            try {
-                lifecycleController.updateStatus(
-                        currentUser,
-                        shipmentIdField.getText(),
-                        (ShipmentStatus) statusCombo.getSelectedItem(),
-                        descField.getText());
-                log("> Updated status for shipment: " + shipmentIdField.getText());
-            } catch (Exception ex) {
-                showError(ex);
-            }
-        });
-
-        outer.add(form, BorderLayout.CENTER);
+        outer.add(card);
         return outer;
     }
 
-    private JPanel buildQueryCard() {
-        JPanel outer = createRoundedCardPanel();
+    private void handleUpdateStatus() {
+        String shipmentId = usShipmentIdField.getText().trim();
+        String newStatus = usNewStatusField.getText().trim();
 
-        JPanel form = new JPanel(new GridBagLayout());
-        form.setOpaque(false);
+        if (shipmentId.isEmpty() || newStatus.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Shipment ID and new status are required.",
+                    "Missing data",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.weightx = 1;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.insets = new Insets(8, 0, 8, 0);
+        Shipment shipment = lifecycleController.findShipmentById(shipmentId);
+        if (shipment == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Shipment not found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String result = lifecycleController.updateShipmentStatus(shipment, newStatus);
+        log(result);
+        JOptionPane.showMessageDialog(this, result, "Status updated",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // ---------- Query / Audit card ----------
+
+    private JComponent buildQueryAuditCard(Color cardBg, Color text, Color accent, Color borderColor) {
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setOpaque(false);
+
+        JPanel card = new JPanel();
+        card.setBackground(cardBg);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(720, 340));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(28, 48, 28, 48)));
 
         JLabel title = new JLabel("Query Shipment / Audit");
-        title.setForeground(textPrimary);
-        title.setFont(new Font("Inter", Font.BOLD, 22));
+        title.setForeground(text);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JTextField shipmentIdField = styledTextField();
-        JButton queryBtn = primaryActionButton("Query Shipment");
-        JButton auditBtn = primaryActionButton("Generate Audit Trail");
+        card.add(title);
+        card.add(Box.createVerticalStrut(18));
 
-        // ensure both buttons look the same weight
-        queryBtn.setFont(fontBold);
-        auditBtn.setFont(fontBold);
+        qaShipmentIdField = createLabeledField(card, "Shipment ID", text, borderColor);
 
-        JPanel buttonRow = new JPanel(new GridLayout(1, 2, 20, 0));
+        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 18, 0));
         buttonRow.setOpaque(false);
+
+        JButton queryBtn = new JButton("Query Shipment");
+        queryBtn.setForeground(text);
+        queryBtn.setBackground(new Color(15, 23, 42));
+        queryBtn.setFocusPainted(false);
+        queryBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        queryBtn.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(8, 18, 8, 18)));
+
+        JButton auditBtn = new JButton("Generate Audit Trail");
+        auditBtn.setForeground(text);
+        auditBtn.setBackground(new Color(15, 23, 42));
+        auditBtn.setFocusPainted(false);
+        auditBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        auditBtn.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(8, 18, 8, 18)));
+
         buttonRow.add(queryBtn);
         buttonRow.add(auditBtn);
 
-        c.gridy = 0;
-        c.gridwidth = 2;
-        c.insets = new Insets(0, 0, 25, 0);
-        form.add(title, c);
+        qaResultArea = new JTextArea(8, 50);
+        qaResultArea.setEditable(false);
+        qaResultArea.setLineWrap(true);
+        qaResultArea.setWrapStyleWord(true);
+        qaResultArea.setBackground(new Color(8, 14, 32));
+        qaResultArea.setForeground(text);
+        qaResultArea.setBorder(new LineBorder(borderColor, 1, true));
 
-        c.gridwidth = 1;
-        c.gridy = 1;
-        c.insets = new Insets(4, 0, 2, 0);
-        form.add(label("Shipment ID"), c);
+        JScrollPane resultScroll = new JScrollPane(qaResultArea);
+        resultScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        resultScroll.setBorder(BorderFactory.createLineBorder(borderColor, 1, true));
 
-        c.gridy = 2;
-        c.insets = new Insets(0, 0, 18, 0);
-        form.add(shipmentIdField, c);
+        queryBtn.addActionListener(e -> handleQueryShipment());
+        auditBtn.addActionListener(e -> handleGenerateAudit());
 
-        c.gridy = 3;
-        c.insets = new Insets(0, 0, 0, 0);
-        form.add(buttonRow, c);
+        card.add(buttonRow);
+        card.add(Box.createVerticalStrut(12));
+        card.add(resultScroll);
 
-        queryBtn.addActionListener(e -> {
-            try {
-                String result = lifecycleController.queryStatus(
-                        currentUser,
-                        shipmentIdField.getText());
-                log("> Query Shipment\n" + result);
-            } catch (Exception ex) {
-                showError(ex);
-            }
-        });
-
-        auditBtn.addActionListener(e -> {
-            try {
-                Report report = complianceController.generateAuditTrail(
-                        shipmentIdField.getText());
-                log("> Audit Trail\n" + report.toString());
-            } catch (Exception ex) {
-                showError(ex);
-            }
-        });
-
-        outer.add(form, BorderLayout.CENTER);
+        outer.add(card);
         return outer;
     }
 
-    private JLabel label(String text) {
-        JLabel lbl = new JLabel(text);
-        lbl.setForeground(textSecondary);
-        lbl.setFont(fontBody);
-        return lbl;
+    private void handleQueryShipment() {
+        String shipmentId = qaShipmentIdField.getText().trim();
+        if (shipmentId.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Shipment ID is required.",
+                    "Missing data",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Shipment shipment = lifecycleController.findShipmentById(shipmentId);
+        String result = complianceController.queryShipmentStatus(shipment);
+        qaResultArea.setText(result);
+        log("Query shipment " + shipmentId + " → " + result);
     }
 
-    // ---------- activity log (terminal vibe) ----------
+    private void handleGenerateAudit() {
+        String shipmentId = qaShipmentIdField.getText().trim();
+        if (shipmentId.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Shipment ID is required.",
+                    "Missing data",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-    private JPanel buildActivityLog() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(4, 7, 18));
-        panel.setBorder(new EmptyBorder(4, 10, 8, 10));
+        Shipment shipment = lifecycleController.findShipmentById(shipmentId);
+        Report report = complianceController.generateAuditTrail(shipment);
+        qaResultArea.setText(report.toString());
 
-        JLabel label = new JLabel("Activity Log");
-        label.setForeground(new Color(130, 180, 255));
-        label.setFont(new Font("Inter", Font.PLAIN, 12));
-
-        activityArea = new JTextArea();
-        activityArea.setEditable(false);
-        activityArea.setBackground(new Color(3, 5, 12));
-        activityArea.setForeground(new Color(144, 238, 144)); // terminal green
-        activityArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        activityArea.setBorder(new EmptyBorder(6, 8, 6, 8));
-        activityArea.setLineWrap(true);
-        activityArea.setWrapStyleWord(true);
-
-        JScrollPane scroll = new JScrollPane(activityArea);
-        scroll.setBorder(BorderFactory.createLineBorder(new Color(18, 28, 54)));
-
-        panel.add(label, BorderLayout.NORTH);
-        panel.add(scroll, BorderLayout.CENTER);
-        panel.setPreferredSize(new Dimension(0, 130));
-
-        log("> Blockchain console ready.");
-        return panel;
+        log("Generated audit trail for shipment " + shipmentId);
     }
 
-    private void log(String msg) {
-        activityArea.append(msg + "\n");
-        activityArea.setCaretPosition(activityArea.getDocument().getLength());
-    }
+    // ---------- Logout ----------
 
-    private void showError(Exception ex) {
-        ex.printStackTrace();
-        log("! ERROR: " + ex.getMessage());
-        JOptionPane.showMessageDialog(
-                this,
-                ex.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+    private void doLogout() {
+        dispose();
+        SwingUtilities.invokeLater(LoginFrame::new);
     }
 }

@@ -1,35 +1,63 @@
 package controller;
 
-import gateway.BlockchainNetworkGateway;
-import model.Event;
-import model.Report;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * Controller responsible for compliance / audit-related actions.
- */
+import external.BlockchainNetwork;
+import gateway.BlockchainNetworkGateway;
+import model.Report;
+import model.Shipment;
+import model.SmartContract;
+
 public class ShipmentComplianceController {
 
+    private final BlockchainNetwork blockchainNetwork;
     private final BlockchainNetworkGateway blockchainGateway;
+    private final SmartContract smartContract;
 
-    public ShipmentComplianceController(BlockchainNetworkGateway blockchainGateway) {
+    public ShipmentComplianceController(BlockchainNetwork blockchainNetwork,
+            BlockchainNetworkGateway blockchainGateway,
+            SmartContract smartContract) {
+
+        this.blockchainNetwork = blockchainNetwork;
         this.blockchainGateway = blockchainGateway;
+        this.smartContract = smartContract;
     }
 
-    public Report generateAuditTrail(String shipmentId) {
-        List<Event> events = blockchainGateway.getEvents(shipmentId);
+    // In this simplified version we let the caller pass the Shipment
+    // (e.g., retrieved from ShipmentLifecycleController).
 
-        if (events.isEmpty()) {
-            return new Report("Audit Trail for " + shipmentId,
-                    "No events found for this shipment.");
+    public String queryShipmentStatus(Shipment shipment) {
+        if (shipment == null) {
+            return "Shipment not found.";
+        }
+        return "Shipment " + shipment.getShipmentId() +
+                " status: " + shipment.getStatus();
+    }
+
+    public Report generateAuditTrail(Shipment shipment) {
+        if (shipment == null) {
+            return new Report("Audit Trail", "No shipment found.");
         }
 
-        String body = events.stream()
-                .map(e -> e.getTimestamp() + " | " + e.getStatus() + " | " + e.getDescription())
-                .collect(Collectors.joining("\n"));
+        StringBuilder sb = new StringBuilder();
+        sb.append("Audit trail for shipment ").append(shipment.getShipmentId()).append("\n\n");
 
-        return new Report("Audit Trail for " + shipmentId, body);
+        List<model.Event> history = shipment.getHistory();
+        for (model.Event e : history) {
+            sb.append(e.getTimestamp())
+                    .append("  -  ")
+                    .append(e.getMessage())
+                    .append("\n");
+        }
+
+        // Simulate querying blockchain
+        blockchainGateway.queryLedger("AuditTrail#" + shipment.getShipmentId());
+
+        return new Report("Audit Trail - Shipment " + shipment.getShipmentId(), sb.toString());
+    }
+
+    public boolean ensureLedgerIntegrity(Shipment shipment) {
+        // For now we simply delegate to the smart contract stub
+        return smartContract.verifyLedgerIntegrity(shipment);
     }
 }

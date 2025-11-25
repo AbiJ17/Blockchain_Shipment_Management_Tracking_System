@@ -1,20 +1,63 @@
 package model;
 
+import java.util.Date;
+import java.util.List;
+
 public class SmartContract {
 
-    // Simple rules to show "contract" behaviour
+    /**
+     * Business rule for status updates.
+     * Now uses String for status (since ShipmentStatus enum was removed).
+     *
+     * Rule:
+     * - If shipment is already DELIVERED, it cannot move back to any other status.
+     */
+    public boolean canUpdateStatus(Shipment shipment, String newStatus) {
+        if (shipment == null || newStatus == null) {
+            return false;
+        }
 
-    // Example rule: once DELIVERED, cannot move back to another state
-    public boolean canUpdateStatus(Shipment shipment, ShipmentStatus newStatus) {
-        if (shipment.getStatus() == ShipmentStatus.DELIVERED &&
-                newStatus != ShipmentStatus.DELIVERED) {
+        String current = shipment.getStatus();
+        if ("DELIVERED".equalsIgnoreCase(current)
+                && !"DELIVERED".equalsIgnoreCase(newStatus)) {
             return false;
         }
         return true;
     }
 
-    // Example rule: payment is allowed only when shipment is delivered
+    /** Example rule: payment only allowed when status is DELIVERED. */
     public boolean canTriggerPayment(Shipment shipment) {
-        return shipment.getStatus() == ShipmentStatus.DELIVERED;
+        if (shipment == null)
+            return false;
+        return "DELIVERED".equalsIgnoreCase(shipment.getStatus());
+    }
+
+    /**
+     * Very simple ledger-integrity check used by ShipmentComplianceController:
+     * - Events must have non-null timestamps
+     * - Timestamps must be strictly increasing (no going backwards).
+     */
+    public boolean verifyLedgerIntegrity(Shipment shipment) {
+        if (shipment == null) {
+            return false;
+        }
+
+        List<Event> history = shipment.getHistory();
+        if (history == null || history.isEmpty()) {
+            return true; // nothing to check
+        }
+
+        Date prev = null;
+        for (Event e : history) {
+            Date ts = e.getTimestamp();
+            if (ts == null) {
+                return false;
+            }
+            if (prev != null && !ts.after(prev)) {
+                return false; // out of order or duplicate timestamp
+            }
+            prev = ts;
+        }
+        return true;
     }
 }

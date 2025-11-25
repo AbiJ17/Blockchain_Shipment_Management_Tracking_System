@@ -1,30 +1,70 @@
 package external;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+
+import model.Document;
 
 /**
- * Simulated off-chain storage for documents.
- * Stores document content keyed by a document ID.
+ * Simple in-memory off-chain storage service.
+ * Acts as the concrete service that OffChainStorageAdapter talks to.
  */
 public class OffChainStorage {
 
-    private final Map<String, String> storage = new HashMap<>();
+    private boolean available = true;
+    private final List<Document> documents = new ArrayList<>();
 
-    public boolean storeDocument(String documentId, String content) {
-        if (documentId == null || content == null) {
-            return false;
+    public OffChainStorage() {
+    }
+
+    /** Simulate whether the storage is up. */
+    public boolean checkAvailability() {
+        return available;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
+    }
+
+    /** Store / overwrite a document in off-chain storage. */
+    public void storeFile(Document document) {
+        if (document == null)
+            return;
+
+        // If a document with same hash already exists, replace it
+        Document existing = getFileByHash(document.getHashValue());
+        if (existing != null) {
+            documents.remove(existing);
         }
-        storage.put(documentId, content);
-        System.out.println("[OffChainStorage] Stored document " + documentId);
-        return true;
+        documents.add(document);
     }
 
-    public String fetchDocument(String documentId) {
-        return storage.get(documentId);
+    /** Retrieve a document by its hash value. */
+    public Document getFileByHash(String hashValue) {
+        if (hashValue == null)
+            return null;
+        for (Document d : documents) {
+            if (hashValue.equals(d.getHashValue())) {
+                return d;
+            }
+        }
+        return null;
     }
 
-    public boolean documentExists(String documentId) {
-        return storage.containsKey(documentId);
+    /** Optional helper: retrieve by name (some controllers / UIs may use this). */
+    public Document getFileByName(String name) {
+        if (name == null)
+            return null;
+        for (Document d : documents) {
+            if (name.equalsIgnoreCase(d.getName())) {
+                return d;
+            }
+        }
+        return null;
+    }
+
+    /** Defensive copy of all docs – useful for debugging / audit. */
+    public List<Document> getAllDocuments() {
+        return new ArrayList<>(documents);
     }
 }

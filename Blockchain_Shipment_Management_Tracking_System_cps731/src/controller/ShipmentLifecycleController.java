@@ -1,114 +1,114 @@
 package controller;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import gateway.BlockchainNetworkGateway;
 import gateway.OffChainStorageAdapter;
-import gateway.PaymentServiceAdapter;
-import model.*;
+import model.Document;
+import model.Shipment;
+import model.Shipper;
+import model.SmartContract;
 
-import java.util.List;
-import java.util.UUID;
-
-/**
- * Controller responsible for shipment lifecycle operations:
- * create, upload docs, update status, query status.
- */
 public class ShipmentLifecycleController {
 
     private final BlockchainNetworkGateway blockchainGateway;
-    private final OffChainStorageAdapter storageAdapter;
-    private final PaymentServiceAdapter paymentAdapter;
-    private final SmartContract smartContract = new SmartContract();
+    private final OffChainStorageAdapter offChainAdapter;
+    private final SmartContract smartContract;
+
+    // In-memory store of shipments keyed by ID
+    private final Map<String, Shipment> shipments = new HashMap<>();
 
     public ShipmentLifecycleController(BlockchainNetworkGateway blockchainGateway,
-            OffChainStorageAdapter storageAdapter,
-            PaymentServiceAdapter paymentAdapter) {
+            OffChainStorageAdapter offChainAdapter,
+            SmartContract smartContract) {
         this.blockchainGateway = blockchainGateway;
-        this.storageAdapter = storageAdapter;
-        this.paymentAdapter = paymentAdapter;
+        this.offChainAdapter = offChainAdapter;
+        this.smartContract = smartContract;
     }
 
-    public String createShipment(User shipper,
+    /**
+     * Create and register a new shipment. Called from the Create Shipment screen.
+     */
+    public Shipment createShipment(Shipper shipper,
+            String shipmentId,
             String origin,
             String destination,
             String description) {
-        if (!shipper.authorize("SHIPMENT_CREATE")) {
-            throw new SecurityException("User not authorized to create shipment");
-        }
 
-        String id = UUID.randomUUID().toString();
-        Shipment shipment = new Shipment(id, origin, destination, description);
-        blockchainGateway.writeShipment(shipment);
-        return id;
+        Shipment shipment = new Shipment(shipmentId, origin, destination, description);
+        shipment.setStatus("CREATED");
+        shipment.addHistoryEvent("Shipment created by shipper " +
+                (shipper != null ? shipper.getUsername() : "system"));
+
+        shipments.put(shipmentId, shipment);
+
+        // Simulate writing a transaction to the blockchain
+        blockchainGateway.connect();
+        blockchainGateway.sendTransaction("CREATE#" + shipmentId);
+
+        return shipment;
     }
 
-    public String uploadDocument(User user,
-            String shipmentId,
-            String name,
-            String content) {
-
-        // For now any logged-in user can upload documents
-        String docId = UUID.randomUUID().toString();
-        Document doc = new Document(docId, shipmentId, name, content);
-        storageAdapter.saveDocument(doc);
-        return docId;
+    /** Used by MainUI: look up a shipment in memory by ID. */
+    public Shipment findShipmentById(String shipmentId) {
+        if (shipmentId == null)
+            return null;
+        return shipments.get(shipmentId);
     }
 
-    public void updateStatus(User actor,
-            String shipmentId,
-            ShipmentStatus newStatus,
-            String description) {
-
-        if (!actor.authorize("SHIPMENT_UPDATE")) {
-            throw new SecurityException("User not authorized to update shipment status");
-        }
-
-        Shipment shipment = blockchainGateway.getShipment(shipmentId);
-        if (shipment == null) {
-            throw new IllegalArgumentException("Shipment not found: " + shipmentId);
-        }
-
-        if (!smartContract.canUpdateStatus(shipment, newStatus)) {
-            throw new IllegalStateException("Smart contract rejected this status transition");
-        }
-
-        Event event = new Event(
-                UUID.randomUUID().toString(),
-                shipmentId,
-                newStatus,
-                description);
-        blockchainGateway.recordEvent(event);
-
-        if (smartContract.canTriggerPayment(shipment)) {
-            paymentAdapter.processPayment(shipment);
-        }
-    }
-
-    public String queryStatus(User user, String shipmentId) {
-        if (!user.authorize("SHIPMENT_QUERY")) {
-            throw new SecurityException("User not authorized to query shipment");
-        }
-
-        Shipment shipment = blockchainGateway.getShipment(shipmentId);
+    /** Used by MainUI: update the shipment status via smart contract rules. */
+    public String updateShipmentStatus(Shipment shipment, String newStatus) {
         if (shipment == null) {
             return "Shipment not found.";
         }
-
-        List<Event> events = blockchainGateway.getEvents(shipmentId);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("Shipment ID: ").append(shipment.getShipmentId()).append("\n")
-                .append("Origin: ").append(shipment.getOrigin()).append("\n")
-                .append("Destination: ").append(shipment.getDestination()).append("\n")
-                .append("Description: ").append(shipment.getDescription()).append("\n")
-                .append("Current Status: ").append(shipment.getStatus()).append("\n\n")
-                .append("Events:\n");
-
-        for (Event e : events) {
-            sb.append("- ").append(e.getTimestamp())
-                    .append(" | ").append(e.getStatus())
-                    .append(" | ").append(e.getDescription())
-                    .append("\n");
+        if (newStatus == null || newStatus.isBlank()) {
+            return "New status cannot be empty.";
         }
-        return sb.toString();
+
+        // Smart-contract rule check
+        if (!smartContract.canUpdateStatus(shipment, newStatus)) {
+            return "Smart contract rejected status change for shipment " +
+                    shipment.getShipmentId();
+        }
+
+        shipment.setStatus(newStatus);
+        shipment.addHistoryEvent("Status updated to: " + newStatus);
+
+        // Simulate blockchain event
+        blockchainGateway.connect();
+        blockchainGateway.sendTransaction("STATUS#" + shipment.getShipmentId() +
+                "#" + newStatus);
+
+        return "Shipment " + shipment.getShipmentId() +
+                " status updated to " + newStatus;
+    }
+
+    /** Used by MainUI: create & upload a document for a shipment. */
+    public Document uploadDocument(Shipment shipment,
+            String documentName,
+            String content) {
+        if (shipment == null) {
+            return null;
+        }
+
+        Document doc = new Document();
+        doc.setName(documentName);
+        doc.setContent(content);
+        doc.generateHash();
+        doc.setTimestamp(new java.util.Date());
+
+        offChainAdapter.connect();
+        offChainAdapter.uploadFile(doc);
+
+        shipment.addHistoryEvent("Document uploaded: " + documentName);
+
+        return doc;
+    }
+
+    /** Optionally used elsewhere (e.g., admin screens). */
+    public Map<String, Shipment> getAllShipments() {
+        return Collections.unmodifiableMap(shipments);
     }
 }
