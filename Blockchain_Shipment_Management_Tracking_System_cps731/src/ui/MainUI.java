@@ -58,6 +58,9 @@ public class MainUI extends JFrame {
     private JTextField qaShipmentIdField;
     private JTextArea qaResultArea;
 
+    // Confirm Delivery Fields
+    private JTextField cdShipmentIdField;
+
     private final DateTimeFormatter logTimeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     public MainUI(
@@ -87,8 +90,7 @@ public class MainUI extends JFrame {
     // ---------- Frame & base layout ----------
 
     private void initFrame() {
-        setTitle("Blockchain Shipment Tracking – " + currentUser.getUsername()
-                + " (" + currentUser.getRole() + ")");
+        setTitle("Blockchain Shipment Tracking – " + currentUser.getUsername() + " (" + currentUser.getRole() + ")");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setSize(1280, 720);
         setLocationRelativeTo(null);
@@ -125,20 +127,7 @@ public class MainUI extends JFrame {
         loggedIn.setForeground(new Color(148, 163, 184));
         loggedIn.setFont(loggedIn.getFont().deriveFont(12f));
 
-        nav.add(title);
-        nav.add(Box.createVerticalStrut(4));
-        nav.add(loggedIn);
-        nav.add(Box.createVerticalStrut(24));
-
-        nav.add(createNavButton("Create Shipment", navButtonBg, accentBorder, e -> showCard("CREATE")));
-        nav.add(Box.createVerticalStrut(12));
-        nav.add(createNavButton("Upload Document", navButtonBg, accentBorder, e -> showCard("UPLOAD")));
-        nav.add(Box.createVerticalStrut(12));
-        nav.add(createNavButton("Update Status", navButtonBg, accentBorder, e -> showCard("STATUS")));
-        nav.add(Box.createVerticalStrut(12));
-        nav.add(createNavButton("Query / Audit", navButtonBg, accentBorder, e -> showCard("QUERY")));
-        nav.add(Box.createVerticalGlue());
-        nav.add(Box.createVerticalStrut(16));
+        addRoleBasedMenu(nav, navButtonBg, accentBorder);
 
         JButton logout = new JButton("Log out");
         logout.setBackground(navButtonBg);
@@ -162,6 +151,15 @@ public class MainUI extends JFrame {
         cardPanel.add(buildUploadDocumentCard(cardBg, text, accent, accentBorder), "UPLOAD");
         cardPanel.add(buildUpdateStatusCard(cardBg, text, accent, accentBorder), "STATUS");
         cardPanel.add(buildQueryAuditCard(cardBg, text, accent, accentBorder), "QUERY");
+        cardPanel.add(buildConfirmDeliveryCard(cardBg, text, accent, accentBorder), "CONFIRM_DELIVERY");
+        cardPanel.add(buildUploadDocumentCard(cardBg, text, accent, accentBorder), "DISPUTE");
+        cardPanel.add(buildUpdateStatusCard(cardBg, text, accent, accentBorder), "VERIFY_DOCUMENT");
+        cardPanel.add(buildQueryAuditCard(cardBg, text, accent, accentBorder), "CLEARANCE");
+        cardPanel.add(buildCreateShipmentCard(cardBg, text, accent, accentBorder), "COMPLIANCE");
+        cardPanel.add(buildUploadDocumentCard(cardBg, text, accent, accentBorder), "AUDIT");
+        cardPanel.add(buildUpdateStatusCard(cardBg, text, accent, accentBorder), "FRAUD");
+        cardPanel.add(buildQueryAuditCard(cardBg, text, accent, accentBorder), "MANAGE_USERS");
+        cardPanel.add(buildCreateShipmentCard(cardBg, text, accent, accentBorder), "ASSIGN_ROLES");
 
         root.add(cardPanel, BorderLayout.CENTER);
 
@@ -601,8 +599,141 @@ public class MainUI extends JFrame {
         log("Generated audit trail for shipment " + shipmentId);
     }
 
-    // ---------- Logout ----------
+    // ---------- Confirm Delivery card ----------
+    private JComponent buildConfirmDeliveryCard(Color cardBg, Color text, Color accent, Color borderColor) {
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setOpaque(false);
 
+        JPanel card = new JPanel();
+        card.setBackground(cardBg);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(720, 340));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(28, 48, 28, 48)));
+
+        JLabel title = new JLabel("Confirm Delivery");
+        title.setForeground(text);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        card.add(title);
+        card.add(Box.createVerticalStrut(18));
+
+        cdShipmentIdField = createLabeledField(card, "Shipment ID", text, borderColor);
+
+        JButton confirmBtn = new JButton("Confirm Delivery");
+        confirmBtn.setForeground(text);
+        confirmBtn.setBackground(new Color(15, 23, 42));
+        confirmBtn.setFocusPainted(false);
+        confirmBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        confirmBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        confirmBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
+        confirmBtn.addActionListener(e -> handleConfirmDelivery());
+
+        card.add(Box.createVerticalStrut(12));
+        card.add(confirmBtn);
+
+        outer.add(card);
+        return outer;
+    }
+
+    private void handleConfirmDelivery() {
+        
+        // Permission check (only Buyer)
+        if (!(currentUser instanceof Buyer)) {
+            JOptionPane.showMessageDialog(this, "Only BUYER role can confirm deliveries.", "Not allowed", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String shipmentId = cdShipmentIdField.getText().trim();
+
+        if (shipmentId.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Shipment ID is required.",
+                    "Missing data",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Shipment shipment = lifecycleController.findShipmentById(shipmentId);
+        if (shipment == null) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Shipment not found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Call controller
+        String result = lifecycleController.confirmDelivery(shipment);
+
+        log(result);
+        JOptionPane.showMessageDialog(this, result);
+        cdShipmentIdField.setText("");
+    }
+
+    // Method to add main menu features/options based on the user role (CHANGE THIS)
+    private void addRoleBasedMenu(JPanel nav, Color bg, Color border) {
+        String role = currentUser.getRole();
+        switch (role) {
+            case "shipper":
+                nav.add(createNavButton("Create Shipment", bg, border, e -> showCard("CREATE")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Upload Document", bg, border, e -> showCard("UPLOAD")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Update Status", bg, border, e -> showCard("STATUS")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Track Shipment / History", bg, border, e -> showCard("QUERY")));
+                break;
+            case "logistics provider":
+                nav.add(createNavButton("Update Status", bg, border, e -> showCard("STATUS")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
+                break;
+            case "warehouse":
+                nav.add(createNavButton("Update Status", bg, border, e -> showCard("STATUS")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
+                break;
+            case "buyer":
+                nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Confirm Delivery", bg, border, e -> showCard("STATUS")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Raise Dispute", bg, border, e -> showCard("UPLOAD"))); 
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Verify Document", bg, border, e -> showCard("QUERY")));
+                break;
+            case "customs officer":
+                nav.add(createNavButton("Clearance Approval", bg, border, e -> showCard("STATUS")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Review Documents", bg, border, e -> showCard("QUERY")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
+                break;
+            case "auditor":
+                nav.add(createNavButton("Compliance Report", bg, border, e -> showCard("QUERY")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Generate Audit Trail", bg, border, e -> showCard("QUERY")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Verify Documents", bg, border, e -> showCard("QUERY")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Fraud Detection", bg, border, e -> showCard("QUERY")));
+                break;
+            case "admin":
+                nav.add(createNavButton("Manage Users", bg, border, e -> showCard("STATUS")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Assign Roles", bg, border, e -> showCard("STATUS")));
+                break;
+            default:
+                nav.add(new JLabel("Unknown role: " + role));
+        }
+    }
+
+    // ---------- Logout ----------
     private void doLogout() {
         dispose();
         SwingUtilities.invokeLater(LoginFrame::new);

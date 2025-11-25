@@ -111,4 +111,26 @@ public class ShipmentLifecycleController {
     public Map<String, Shipment> getAllShipments() {
         return Collections.unmodifiableMap(shipments);
     }
+
+    /** Buyer confirms that the shipment has been delivered. */
+    public String confirmDelivery(Shipment shipment) {
+        if (shipment == null) {
+            return "Shipment not found.";
+        }
+
+        // Smart Contract validation (optional rule)
+        if (!smartContract.canUpdateStatus(shipment, "DELIVERED")) {
+            return "Smart contract rejected delivery confirmation.";
+        }
+
+        shipment.setStatus("DELIVERED");
+        shipment.addHistoryEvent("Delivery confirmed by buyer.");
+
+        // Emit blockchain event
+        blockchainGateway.connect();
+        blockchainGateway.sendTransaction("DELIVERED#" + shipment.getShipmentId());
+
+        return "Shipment " + shipment.getShipmentId() + " marked as DELIVERED.";
+    }
+
 }
