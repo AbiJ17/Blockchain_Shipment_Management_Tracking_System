@@ -51,6 +51,7 @@ public class LoginFrame extends JFrame {
         complianceController = new ShipmentComplianceController(
                 blockchainNetwork,
                 blockchainGateway,
+                offChainAdapter,
                 smartContract);
 
         seedDemoUsers();

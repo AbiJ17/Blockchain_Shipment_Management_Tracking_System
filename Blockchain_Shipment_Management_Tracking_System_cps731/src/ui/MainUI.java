@@ -61,6 +61,15 @@ public class MainUI extends JFrame {
     // Confirm Delivery Fields
     private JTextField cdShipmentIdField;
 
+    // Raise Dispute Fields
+    private JTextField rdShipmentIdField;
+    private JTextArea rdDescriptionArea;
+
+    // Verify Document Fields
+    private JTextField vdShipmentIdField;
+    private JTextField vdDocNameField;
+    private JTextArea vdResultArea;
+
     private final DateTimeFormatter logTimeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     public MainUI(
@@ -152,8 +161,8 @@ public class MainUI extends JFrame {
         cardPanel.add(buildUpdateStatusCard(cardBg, text, accent, accentBorder), "STATUS");
         cardPanel.add(buildQueryAuditCard(cardBg, text, accent, accentBorder), "QUERY");
         cardPanel.add(buildConfirmDeliveryCard(cardBg, text, accent, accentBorder), "CONFIRM_DELIVERY");
-        cardPanel.add(buildUploadDocumentCard(cardBg, text, accent, accentBorder), "DISPUTE");
-        cardPanel.add(buildUpdateStatusCard(cardBg, text, accent, accentBorder), "VERIFY_DOCUMENT");
+        cardPanel.add(buildRaiseDisputeCard(cardBg, text, accent, accentBorder), "DISPUTE");
+        cardPanel.add(buildVerifyDocumentCard(cardBg, text, accent, accentBorder), "VERIFY_DOCUMENT");
         cardPanel.add(buildQueryAuditCard(cardBg, text, accent, accentBorder), "CLEARANCE");
         cardPanel.add(buildCreateShipmentCard(cardBg, text, accent, accentBorder), "COMPLIANCE");
         cardPanel.add(buildUploadDocumentCard(cardBg, text, accent, accentBorder), "AUDIT");
@@ -649,21 +658,13 @@ public class MainUI extends JFrame {
         String shipmentId = cdShipmentIdField.getText().trim();
 
         if (shipmentId.isEmpty()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Shipment ID is required.",
-                    "Missing data",
-                    JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Shipment ID is required.", "Missing data", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         Shipment shipment = lifecycleController.findShipmentById(shipmentId);
         if (shipment == null) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Shipment not found.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Shipment not found.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -675,11 +676,169 @@ public class MainUI extends JFrame {
         cdShipmentIdField.setText("");
     }
 
+    // ---------- Raise Dispute Card ----------
+    private JComponent buildRaiseDisputeCard(Color cardBg, Color text, Color accent, Color borderColor) {
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setOpaque(false);
+
+        JPanel card = new JPanel();
+        card.setBackground(cardBg);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(720, 340));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(28, 48, 28, 48)));
+
+        JLabel title = new JLabel("Raise Dispute");
+        title.setForeground(text);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        card.add(title);
+        card.add(Box.createVerticalStrut(18));
+
+        rdShipmentIdField = createLabeledField(card, "Shipment ID", text, borderColor);
+
+        JLabel descLabel = new JLabel("Dispute Description");
+        descLabel.setForeground(text);
+        card.add(descLabel);
+        card.add(Box.createVerticalStrut(4));
+
+        rdDescriptionArea = new JTextArea(5, 40);
+        rdDescriptionArea.setLineWrap(true);
+        rdDescriptionArea.setWrapStyleWord(true);
+        rdDescriptionArea.setBackground(new Color(8, 14, 32));
+        rdDescriptionArea.setForeground(text);
+        rdDescriptionArea.setCaretColor(text);
+        rdDescriptionArea.setBorder(new LineBorder(borderColor, 1, true));
+
+        JScrollPane scroll = new JScrollPane(rdDescriptionArea);
+        scroll.setBorder(new LineBorder(borderColor, 1, true));
+        card.add(scroll);
+        card.add(Box.createVerticalStrut(18));
+
+        JButton raiseBtn = new JButton("Submit Dispute");
+        raiseBtn.setForeground(Color.WHITE);
+        raiseBtn.setBackground(accent);
+        raiseBtn.setFocusPainted(false);
+        raiseBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        raiseBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        raiseBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
+        raiseBtn.addActionListener(e -> handleRaiseDispute());
+
+        card.add(raiseBtn);
+        outer.add(card);
+        return outer;
+    }
+
+    private void handleRaiseDispute() {
+        if (!(currentUser instanceof Buyer)) {
+            JOptionPane.showMessageDialog(this, "Only BUYERS may raise disputes.", "Not allowed", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String shipmentId = rdShipmentIdField.getText().trim();
+        String description = rdDescriptionArea.getText().trim();
+
+        if (shipmentId.isEmpty() || description.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Shipment ID and description are required.", "Missing data", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Shipment shipment = lifecycleController.findShipmentById(shipmentId);
+        if (shipment == null) {
+            JOptionPane.showMessageDialog(this, "Shipment not found.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String result = complianceController.logDispute(shipment, description);
+
+        log(result);
+        JOptionPane.showMessageDialog(this, result);
+
+        rdShipmentIdField.setText("");
+        rdDescriptionArea.setText("");
+    }
+
+    // ---------- Verify Document Card ----------
+    private JComponent buildVerifyDocumentCard(Color cardBg, Color text, Color accent, Color borderColor) {
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setOpaque(false);
+
+        JPanel card = new JPanel();
+        card.setBackground(cardBg);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(720, 320));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(28, 48, 28, 48)));
+
+        JLabel title = new JLabel("Verify Document Integrity");
+        title.setForeground(text);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        card.add(title);
+        card.add(Box.createVerticalStrut(18));
+
+        vdShipmentIdField = createLabeledField(card, "Shipment ID", text, borderColor);
+        vdDocNameField = createLabeledField(card, "Document Name", text, borderColor);
+
+        vdResultArea = new JTextArea(5, 40);
+        vdResultArea.setEditable(false);
+        vdResultArea.setLineWrap(true);
+        vdResultArea.setWrapStyleWord(true);
+        vdResultArea.setBackground(new Color(8, 14, 32));
+        vdResultArea.setForeground(text);
+        vdResultArea.setBorder(new LineBorder(borderColor, 1, true));
+
+        JScrollPane scroll = new JScrollPane(vdResultArea);
+        scroll.setBorder(new LineBorder(borderColor, 1, true));
+        card.add(scroll);
+        card.add(Box.createVerticalStrut(18));
+
+        JButton verifyBtn = new JButton("Verify Document");
+        verifyBtn.setForeground(Color.WHITE);
+        verifyBtn.setBackground(accent);
+        verifyBtn.setFocusPainted(false);
+        verifyBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        verifyBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        verifyBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
+        verifyBtn.addActionListener(e -> handleVerifyDocument());
+
+        card.add(verifyBtn);
+        outer.add(card);
+        return outer;
+    }
+
+    private void handleVerifyDocument() {
+        String shipmentId = vdShipmentIdField.getText().trim();
+        String docName = vdDocNameField.getText().trim();
+
+        if (shipmentId.isEmpty() || docName.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Shipment ID and Document Name are required.", "Missing data", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Shipment shipment = lifecycleController.findShipmentById(shipmentId);
+        if (shipment == null) {
+            JOptionPane.showMessageDialog(this, "Shipment not found.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String result = complianceController.verifyDocument(shipment, docName);
+
+        vdResultArea.setText(result);
+        log(result);
+    }
+
+
+
     // Method to add main menu features/options based on the user role (CHANGE THIS)
     private void addRoleBasedMenu(JPanel nav, Color bg, Color border) {
         String role = currentUser.getRole();
         switch (role) {
-            case "shipper":
+            case "SHIPPER":
                 nav.add(createNavButton("Create Shipment", bg, border, e -> showCard("CREATE")));
                 nav.add(Box.createVerticalStrut(12));
                 nav.add(createNavButton("Upload Document", bg, border, e -> showCard("UPLOAD")));
@@ -688,17 +847,17 @@ public class MainUI extends JFrame {
                 nav.add(Box.createVerticalStrut(12));
                 nav.add(createNavButton("Track Shipment / History", bg, border, e -> showCard("QUERY")));
                 break;
-            case "logistics provider":
+            case "LOGISTICS_PROVIDER":
                 nav.add(createNavButton("Update Status", bg, border, e -> showCard("STATUS")));
                 nav.add(Box.createVerticalStrut(12));
                 nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
                 break;
-            case "warehouse":
+            case "WAREHOUSE":
                 nav.add(createNavButton("Update Status", bg, border, e -> showCard("STATUS")));
                 nav.add(Box.createVerticalStrut(12));
                 nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
                 break;
-            case "buyer":
+            case "BUYER":
                 nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
                 nav.add(Box.createVerticalStrut(12));
                 nav.add(createNavButton("Confirm Delivery", bg, border, e -> showCard("STATUS")));
@@ -707,14 +866,14 @@ public class MainUI extends JFrame {
                 nav.add(Box.createVerticalStrut(12));
                 nav.add(createNavButton("Verify Document", bg, border, e -> showCard("QUERY")));
                 break;
-            case "customs officer":
+            case "CUSTOMS_OFFICER":
                 nav.add(createNavButton("Clearance Approval", bg, border, e -> showCard("STATUS")));
                 nav.add(Box.createVerticalStrut(12));
                 nav.add(createNavButton("Review Documents", bg, border, e -> showCard("QUERY")));
                 nav.add(Box.createVerticalStrut(12));
                 nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
                 break;
-            case "auditor":
+            case "AUDITOR":
                 nav.add(createNavButton("Compliance Report", bg, border, e -> showCard("QUERY")));
                 nav.add(Box.createVerticalStrut(12));
                 nav.add(createNavButton("Generate Audit Trail", bg, border, e -> showCard("QUERY")));
@@ -723,7 +882,7 @@ public class MainUI extends JFrame {
                 nav.add(Box.createVerticalStrut(12));
                 nav.add(createNavButton("Fraud Detection", bg, border, e -> showCard("QUERY")));
                 break;
-            case "admin":
+            case "ADMIN":
                 nav.add(createNavButton("Manage Users", bg, border, e -> showCard("STATUS")));
                 nav.add(Box.createVerticalStrut(12));
                 nav.add(createNavButton("Assign Roles", bg, border, e -> showCard("STATUS")));

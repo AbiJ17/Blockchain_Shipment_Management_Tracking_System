@@ -60,4 +60,9 @@ public class SmartContract {
         }
         return true;
     }
+
+    /** Example rule: raise dispute if status is not DELIVERED. */
+    public boolean canRaiseDispute(Shipment shipment) {
+        return !shipment.getStatus().equals("DELIVERED");
+    }
 }
