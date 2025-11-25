@@ -11,6 +11,8 @@ import model.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableModel;
+
 import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -165,10 +167,9 @@ public class MainUI extends JFrame {
         cardPanel.add(buildVerifyDocumentCard(cardBg, text, accent, accentBorder), "VERIFY_DOCUMENT");
         cardPanel.add(buildClearanceApprovalCard(cardBg, text, accent, accentBorder), "CLEARANCE");
         cardPanel.add(buildComplianceReportCard(cardBg, text, accent, accentBorder), "COMPLIANCE");
-        cardPanel.add(buildUploadDocumentCard(cardBg, text, accent, accentBorder), "AUDIT");
-        cardPanel.add(buildUpdateStatusCard(cardBg, text, accent, accentBorder), "FRAUD");
-        cardPanel.add(buildQueryAuditCard(cardBg, text, accent, accentBorder), "MANAGE_USERS");
-        cardPanel.add(buildCreateShipmentCard(cardBg, text, accent, accentBorder), "ASSIGN_ROLES");
+        cardPanel.add(buildFraudDetectionCard(cardBg, text, accent, accentBorder), "FRAUD");
+        cardPanel.add(buildManageUsersCard(cardBg, text, accent, accentBorder), "MANAGE_USERS");
+        cardPanel.add(buildAssignRolesCard(cardBg, text, accent, accentBorder), "ASSIGN_ROLES");
 
         root.add(cardPanel, BorderLayout.CENTER);
 
@@ -232,7 +233,6 @@ public class MainUI extends JFrame {
     }
 
     // ---------- Create Shipment card ----------
-
     private JComponent buildCreateShipmentCard(Color cardBg, Color text, Color accent, Color borderColor) {
         JPanel outer = new JPanel(new GridBagLayout());
         outer.setOpaque(false);
@@ -345,7 +345,6 @@ public class MainUI extends JFrame {
     }
 
     // ---------- Upload Document card ----------
-
     private JComponent buildUploadDocumentCard(Color cardBg, Color text, Color accent, Color borderColor) {
         JPanel outer = new JPanel(new GridBagLayout());
         outer.setOpaque(false);
@@ -436,7 +435,6 @@ public class MainUI extends JFrame {
     }
 
     // ---------- Update Status card ----------
-
     private JComponent buildUpdateStatusCard(Color cardBg, Color text, Color accent, Color borderColor) {
         JPanel outer = new JPanel(new GridBagLayout());
         outer.setOpaque(false);
@@ -505,7 +503,6 @@ public class MainUI extends JFrame {
     }
 
     // ---------- Query / Audit card ----------
-
     private JComponent buildQueryAuditCard(Color cardBg, Color text, Color accent, Color borderColor) {
         JPanel outer = new JPanel(new GridBagLayout());
         outer.setOpaque(false);
@@ -964,6 +961,202 @@ public class MainUI extends JFrame {
         return outer;
     }
 
+    // ---------- Fraud Detection card ----------
+    private JComponent buildFraudDetectionCard(Color cardBg, Color text, Color accent, Color borderColor) {
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setOpaque(false);
+
+        JPanel card = new JPanel();
+        card.setBackground(cardBg);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(720, 300));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(28, 48, 28, 48)));
+
+        JLabel title = new JLabel("Fraud Detection");
+        title.setForeground(text);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        card.add(title);
+        card.add(Box.createVerticalStrut(18));
+
+        JTextField fdShipmentField = createLabeledField(card, "Shipment ID", text, borderColor);
+
+        JTextArea fdResultArea = new JTextArea(6, 50);
+        fdResultArea.setEditable(false);
+        fdResultArea.setLineWrap(true);
+        fdResultArea.setWrapStyleWord(true);
+        fdResultArea.setBackground(new Color(8, 14, 32));
+        fdResultArea.setForeground(text);
+        fdResultArea.setBorder(new LineBorder(borderColor, 1, true));
+
+        JScrollPane resultScroll = new JScrollPane(fdResultArea);
+        card.add(resultScroll);
+        card.add(Box.createVerticalStrut(18));
+
+        JButton analyzeBtn = new JButton("Analyze Fraud Risk");
+        analyzeBtn.setForeground(Color.WHITE);
+        analyzeBtn.setBackground(accent);
+        analyzeBtn.setFocusPainted(false);
+        analyzeBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        analyzeBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        analyzeBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
+
+        analyzeBtn.addActionListener(e -> {
+            String id = fdShipmentField.getText().trim();
+            Shipment s = lifecycleController.findShipmentById(id);
+            String res = handleFraudDetection(s);
+            fdResultArea.setText(res);
+            log("Fraud Detection → " + res);
+        });
+
+        card.add(analyzeBtn);
+
+        outer.add(card);
+        return outer;
+    }
+
+    private String handleFraudDetection(Shipment shipment) {
+        if (shipment == null) return "Shipment not found.";
+
+        boolean integrity = smartContract.verifyLedgerIntegrity(shipment);
+        boolean missingDocs = shipment.getDocuments().isEmpty();
+
+        if (!integrity)
+            return "HIGH RISK: Ledger integrity violation detected.";
+
+        if (missingDocs)
+            return "MEDIUM RISK: Missing documentation.";
+
+        return "No fraud indicators found.";
+    }
+
+    // ---------- Manage Users card ----------
+    private JComponent buildManageUsersCard(Color cardBg, Color text, Color accent, Color borderColor) {
+
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setOpaque(false);
+
+        JPanel card = new JPanel();
+        card.setBackground(cardBg);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(720, 350));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(28, 48, 28, 48)));
+
+        JLabel title = new JLabel("Manage Users");
+        title.setForeground(text);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        card.add(title);
+        card.add(Box.createVerticalStrut(12));
+
+        // Table model
+        String[] columns = {"Username", "Role", "Email"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0);
+
+        // Populate table (assumes LoginFrame or MainUI has user list)
+        for (User u : LoginFrame.demoUsersStatic()) {  // Add a static getter in LoginFrame
+            model.addRow(new Object[]{u.getUsername(), u.getRole(), u.getEmail()});
+        }
+
+        JTable table = new JTable(model);
+        table.setBackground(new Color(8, 14, 32));
+        table.setForeground(text);
+        table.setGridColor(borderColor);
+
+        JScrollPane tableScroll = new JScrollPane(table);
+        card.add(tableScroll);
+        card.add(Box.createVerticalStrut(18));
+
+        JButton deleteBtn = new JButton("Delete Selected User");
+        deleteBtn.setForeground(Color.WHITE);
+        deleteBtn.setBackground(accent);
+        deleteBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        deleteBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
+
+        deleteBtn.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Select a user first.");
+                return;
+            }
+
+            String username = model.getValueAt(row, 0).toString();
+            LoginFrame.deleteUserStatic(username);  // add static method in LoginFrame
+            model.removeRow(row);
+
+            log("User deleted: " + username);
+        });
+
+        card.add(deleteBtn);
+
+        outer.add(card);
+        return outer;
+    }
+
+    // ---------- Assign Roles card ----------
+    private JComponent buildAssignRolesCard(Color cardBg, Color text, Color accent, Color borderColor) {
+
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setOpaque(false);
+
+        JPanel card = new JPanel();
+        card.setBackground(cardBg);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(620, 300));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(28, 48, 28, 48)));
+
+        JLabel title = new JLabel("Assign Roles");
+        title.setForeground(text);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        card.add(title);
+        card.add(Box.createVerticalStrut(18));
+
+        JComboBox<String> userSelect = new JComboBox<>();
+        for (User u : LoginFrame.demoUsersStatic()) {
+            userSelect.addItem(u.getUsername());
+        }
+        card.add(userSelect);
+        card.add(Box.createVerticalStrut(12));
+
+        JComboBox<String> roleSelect = new JComboBox<>(new String[]{
+            "SHIPPER", "BUYER", "LOGISTICS_PROVIDER", "WAREHOUSE",
+            "CUSTOMS_OFFICER", "AUDITOR", "ADMIN"
+        });
+        card.add(roleSelect);
+        card.add(Box.createVerticalStrut(18));
+
+        JButton assignBtn = new JButton("Assign Role");
+        assignBtn.setForeground(Color.WHITE);
+        assignBtn.setBackground(accent);
+        assignBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        assignBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
+
+        assignBtn.addActionListener(e -> {
+            String username = (String) userSelect.getSelectedItem();
+            String newRole = (String) roleSelect.getSelectedItem();
+
+            User u = LoginFrame.getUserStatic(username);
+            if (u != null) {
+                u.setRole(newRole);
+                log("Updated role for " + username + " → " + newRole);
+                JOptionPane.showMessageDialog(this, "Role updated.");
+            }
+        });
+
+        card.add(assignBtn);
+
+        outer.add(card);
+        return outer;
+    }
 
 
 

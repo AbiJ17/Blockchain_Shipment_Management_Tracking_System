@@ -292,4 +292,30 @@ public class LoginFrame extends JFrame {
         });
         dispose();
     }
+
+    // A static reference so MainUI can access the same list
+    private static List<User> demoUsersStaticRef;
+
+    /** Returns the static user list */
+    public static List<User> demoUsersStatic() {
+        return demoUsersStaticRef;
+    }
+
+    /** Get a specific user by username */
+    public static User getUserStatic(String username) {
+        if (demoUsersStaticRef == null) return null;
+        for (User u : demoUsersStaticRef) {
+            if (u.getUsername().equalsIgnoreCase(username)) {
+                return u;
+            }
+        }
+        return null;
+    }
+
+    /** Delete a user from the static list */
+    public static void deleteUserStatic(String username) {
+        if (demoUsersStaticRef == null) return;
+        demoUsersStaticRef.removeIf(u -> u.getUsername().equalsIgnoreCase(username));
+    }
+
 }
