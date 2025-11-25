@@ -202,8 +202,75 @@ public class MainUI extends JFrame {
         showCard("CREATE");
     }
 
-    private JButton createNavButton(String text, Color bg, Color borderColor,
-            java.awt.event.ActionListener listener) {
+    // Method to add main menu features/options based on the user role
+    private void addRoleBasedMenu(JPanel nav, Color bg, Color border) {
+        String role = currentUser.getRole();
+        switch (role) {
+
+            // ---------------- SHIPPER ----------------
+            case "SHIPPER":
+                nav.add(createNavButton("Create Shipment", bg, border, e -> showCard("CREATE")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Upload Document", bg, border, e -> showCard("UPLOAD")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Update Status", bg, border, e -> showCard("STATUS")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Track Shipment / History", bg, border, e -> showCard("QUERY")));
+                break;
+            // ---------------- LOGISTICS_PROVIDER ----------------
+            case "LOGISTICS_PROVIDER":
+                nav.add(createNavButton("Update Status", bg, border, e -> showCard("STATUS")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
+                break;
+            // ---------------- WAREHOUSE ----------------
+            case "WAREHOUSE":
+                nav.add(createNavButton("Update Status", bg, border, e -> showCard("STATUS")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
+                break;
+            // ---------------- BUYER ----------------
+            case "BUYER":
+                nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Confirm Delivery", bg, border, e -> showCard("CONFIRM_DELIVERY")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Raise Dispute", bg, border, e -> showCard("DISPUTE")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Verify Document", bg, border, e -> showCard("VERIFY_DOCUMENT")));
+                break;
+            // ---------------- CUSTOMS_OFFICER ----------------
+            case "CUSTOMS_OFFICER":
+                nav.add(createNavButton("Clearance Approval", bg, border, e -> showCard("CLEARANCE")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Review Documents", bg, border, e -> showCard("VERIFY_DOCUMENT")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
+                break;
+            // ---------------- AUDITOR ----------------
+            case "AUDITOR":
+                nav.add(createNavButton("Compliance Report", bg, border, e -> showCard("COMPLIANCE")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Generate Audit Trail", bg, border, e -> showCard("QUERY")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Verify Documents", bg, border, e -> showCard("VERIFY_DOCUMENT")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Fraud Detection", bg, border, e -> showCard("FRAUD")));
+                break;
+            // ---------------- ADMIN ----------------
+            case "ADMIN":
+                nav.add(createNavButton("Manage Users", bg, border, e -> showCard("MANAGE_USERS")));
+                nav.add(Box.createVerticalStrut(12));
+                nav.add(createNavButton("Assign Roles", bg, border, e -> showCard("ASSIGN_ROLES")));
+                break;
+            default:
+                nav.add(new JLabel("Unknown role: " + role));
+                break;
+        }
+        nav.add(Box.createVerticalStrut(24));
+    }
+
+    private JButton createNavButton(String text, Color bg, Color borderColor, java.awt.event.ActionListener listener) {
         JButton btn = new JButton(text);
         btn.setAlignmentX(Component.LEFT_ALIGNMENT);
         btn.setForeground(new Color(226, 232, 255));
@@ -1156,67 +1223,6 @@ public class MainUI extends JFrame {
 
         outer.add(card);
         return outer;
-    }
-
-
-
-
-    // Method to add main menu features/options based on the user role (CHANGE THIS)
-    private void addRoleBasedMenu(JPanel nav, Color bg, Color border) {
-        String role = currentUser.getRole();
-        switch (role) {
-            case "SHIPPER":
-                nav.add(createNavButton("Create Shipment", bg, border, e -> showCard("CREATE")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Upload Document", bg, border, e -> showCard("UPLOAD")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Update Status", bg, border, e -> showCard("STATUS")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Track Shipment / History", bg, border, e -> showCard("QUERY")));
-                break;
-            case "LOGISTICS_PROVIDER":
-                nav.add(createNavButton("Update Status", bg, border, e -> showCard("STATUS")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
-                break;
-            case "WAREHOUSE":
-                nav.add(createNavButton("Update Status", bg, border, e -> showCard("STATUS")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
-                break;
-            case "BUYER":
-                nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Confirm Delivery", bg, border, e -> showCard("STATUS")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Raise Dispute", bg, border, e -> showCard("UPLOAD"))); 
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Verify Document", bg, border, e -> showCard("QUERY")));
-                break;
-            case "CUSTOMS_OFFICER":
-                nav.add(createNavButton("Clearance Approval", bg, border, e -> showCard("STATUS")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Review Documents", bg, border, e -> showCard("QUERY")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Track Shipment", bg, border, e -> showCard("QUERY")));
-                break;
-            case "AUDITOR":
-                nav.add(createNavButton("Compliance Report", bg, border, e -> showCard("QUERY")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Generate Audit Trail", bg, border, e -> showCard("QUERY")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Verify Documents", bg, border, e -> showCard("QUERY")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Fraud Detection", bg, border, e -> showCard("QUERY")));
-                break;
-            case "ADMIN":
-                nav.add(createNavButton("Manage Users", bg, border, e -> showCard("STATUS")));
-                nav.add(Box.createVerticalStrut(12));
-                nav.add(createNavButton("Assign Roles", bg, border, e -> showCard("STATUS")));
-                break;
-            default:
-                nav.add(new JLabel("Unknown role: " + role));
-        }
     }
 
     // ---------- Logout ----------
