@@ -55,6 +55,7 @@ public class LoginFrame extends JFrame {
                 smartContract);
 
         seedDemoUsers();
+        demoUsersStaticRef = demoUsers; 
 
         // ---------- Look & feel ----------
         setTitle("Blockchain Shipment Tracking – Login");
