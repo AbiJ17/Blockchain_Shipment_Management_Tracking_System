@@ -109,4 +109,32 @@ public class ShipmentComplianceController {
 
         return "Document not found: " + documentName;
     }
+
+    public String approveClearance(Shipment shipment, String decision) {
+        if (!decision.equals("APPROVE") && !decision.equals("REJECT")) {
+            return "Invalid decision. Must be APPROVE or REJECT.";
+        }
+
+        boolean allowed = smartContract.validateCustomsClearance(shipment, decision);
+        if (!allowed) {
+            return "Smart contract rejected clearance.";
+        }
+
+        shipment.addHistoryEvent("Customs clearance: " + decision);
+
+        blockchainGateway.sendTransaction("CLEARANCE#" + shipment.getShipmentId() + "#" + decision);
+
+        return "Clearance " + decision + " recorded for shipment " + shipment.getShipmentId();
+    }
+
+    public Report generateComplianceSummary(String filter) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Compliance Report\n\n");
+
+        sb.append("Filter applied: ").append(filter.isEmpty() ? "None" : filter).append("\n\n");
+        sb.append("Note: This is a simplified summary. Add more metrics as needed.\n");
+
+        return new Report("Compliance Report", sb.toString());
+    }
+
 }

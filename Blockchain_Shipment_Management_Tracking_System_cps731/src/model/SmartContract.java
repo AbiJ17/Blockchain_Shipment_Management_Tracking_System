@@ -65,4 +65,50 @@ public class SmartContract {
     public boolean canRaiseDispute(Shipment shipment) {
         return !shipment.getStatus().equals("DELIVERED");
     }
+
+    /**
+     * Customs clearance validation rule.
+     *
+     * Rules:
+     * - Decision must be APPROVE or REJECT.
+     * - Cannot approve clearance after shipment is DELIVERED.
+     * - Approval only allowed when shipment is in a customs-relevant status.
+     * - Rejection is always allowed unless shipment is already DELIVERED.
+     */
+    public boolean validateCustomsClearance(Shipment shipment, String decision) {
+
+        if (shipment == null || decision == null) {
+            return false;
+        }
+
+        String status = shipment.getStatus().toUpperCase();
+        decision = decision.toUpperCase();
+
+        // Must be APPROVE or REJECT
+        if (!decision.equals("APPROVE") && !decision.equals("REJECT")) {
+            return false;
+        }
+
+        // Cannot perform clearance on delivered shipments
+        if (status.equals("DELIVERED")) {
+            return false;
+        }
+
+        // Reject is always allowed prior to delivery
+        if (decision.equals("REJECT")) {
+            return true;
+        }
+
+        // Approval must follow logical customs workflow
+        boolean allowedForApproval =
+                status.equals("CREATED") ||
+                status.equals("IN_TRANSIT") ||
+                status.equals("AT_BORDER") ||
+                status.equals("AT_WAREHOUSE");
+
+        return allowedForApproval;
+    }
+
+
+
 }

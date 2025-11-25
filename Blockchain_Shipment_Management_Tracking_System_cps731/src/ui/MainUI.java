@@ -163,8 +163,8 @@ public class MainUI extends JFrame {
         cardPanel.add(buildConfirmDeliveryCard(cardBg, text, accent, accentBorder), "CONFIRM_DELIVERY");
         cardPanel.add(buildRaiseDisputeCard(cardBg, text, accent, accentBorder), "DISPUTE");
         cardPanel.add(buildVerifyDocumentCard(cardBg, text, accent, accentBorder), "VERIFY_DOCUMENT");
-        cardPanel.add(buildQueryAuditCard(cardBg, text, accent, accentBorder), "CLEARANCE");
-        cardPanel.add(buildCreateShipmentCard(cardBg, text, accent, accentBorder), "COMPLIANCE");
+        cardPanel.add(buildClearanceApprovalCard(cardBg, text, accent, accentBorder), "CLEARANCE");
+        cardPanel.add(buildComplianceReportCard(cardBg, text, accent, accentBorder), "COMPLIANCE");
         cardPanel.add(buildUploadDocumentCard(cardBg, text, accent, accentBorder), "AUDIT");
         cardPanel.add(buildUpdateStatusCard(cardBg, text, accent, accentBorder), "FRAUD");
         cardPanel.add(buildQueryAuditCard(cardBg, text, accent, accentBorder), "MANAGE_USERS");
@@ -831,6 +831,140 @@ public class MainUI extends JFrame {
         vdResultArea.setText(result);
         log(result);
     }
+
+    // ---------- Clearance Approval card ----------
+    private JComponent buildClearanceApprovalCard(Color cardBg, Color text, Color accent, Color borderColor) {
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setOpaque(false);
+
+        JPanel card = new JPanel();
+        card.setBackground(cardBg);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(620, 300));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(28, 48, 28, 48)));
+
+        JLabel title = new JLabel("Customs Clearance Approval", SwingConstants.CENTER);
+        title.setForeground(text);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+
+        card.add(title);
+        card.add(Box.createVerticalStrut(20));
+
+        JTextField shipmentIdField = createLabeledField(card, "Shipment ID", text, borderColor);
+
+        JTextField decisionField = createLabeledField(
+                card,
+                "Decision (APPROVE / REJECT)",
+                text,
+                borderColor
+        );
+
+        JButton approveBtn = new JButton("Submit Clearance");
+        approveBtn.setForeground(Color.WHITE);
+        approveBtn.setBackground(accent);
+        approveBtn.setFocusPainted(false);
+        approveBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        approveBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        approveBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
+
+        approveBtn.addActionListener(e -> {
+            String shipmentId = shipmentIdField.getText().trim();
+            String decision = decisionField.getText().trim().toUpperCase();
+
+            if (shipmentId.isEmpty() || decision.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Shipment ID and decision are required.",
+                        "Missing data",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            Shipment shipment = lifecycleController.findShipmentById(shipmentId);
+            if (shipment == null) {
+                JOptionPane.showMessageDialog(this,
+                        "Shipment not found.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Smart contract customs rule
+            String result = complianceController.approveClearance(shipment, decision);
+
+            log("Clearance decision: " + result);
+            JOptionPane.showMessageDialog(this, result, "Clearance", JOptionPane.INFORMATION_MESSAGE);
+        });
+
+        card.add(Box.createVerticalStrut(20));
+        card.add(approveBtn);
+
+        outer.add(card);
+        return outer;
+    }
+
+    // ---------- Compliance Report card ----------
+    private JComponent buildComplianceReportCard(Color cardBg, Color text, Color accent, Color borderColor) {
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setOpaque(false);
+
+        JPanel card = new JPanel();
+        card.setBackground(cardBg);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(720, 350));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1, true),
+                new EmptyBorder(28, 48, 28, 48)));
+
+        JLabel title = new JLabel("Generate Compliance Report");
+        title.setForeground(text);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+
+        card.add(title);
+        card.add(Box.createVerticalStrut(20));
+
+        JTextField filterField = createLabeledField(card, "Filter (optional)", text, borderColor);
+
+        JButton generateBtn = new JButton("Generate Report");
+        generateBtn.setForeground(Color.WHITE);
+        generateBtn.setBackground(accent);
+        generateBtn.setFocusPainted(false);
+        generateBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        generateBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        generateBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
+
+        JTextArea reportArea = new JTextArea(8, 50);
+        reportArea.setEditable(false);
+        reportArea.setLineWrap(true);
+        reportArea.setWrapStyleWord(true);
+        reportArea.setBackground(new Color(8, 14, 32));
+        reportArea.setForeground(text);
+        reportArea.setBorder(new LineBorder(borderColor, 1, true));
+
+        JScrollPane scroll = new JScrollPane(reportArea);
+        scroll.setBorder(new LineBorder(borderColor, 1, true));
+
+        generateBtn.addActionListener(e -> {
+            String filter = filterField.getText().trim();
+
+            Report report = complianceController.generateComplianceSummary(filter);
+            reportArea.setText(report.toString());
+
+            log("Compliance report generated");
+        });
+
+        card.add(generateBtn);
+        card.add(Box.createVerticalStrut(12));
+        card.add(scroll);
+
+        outer.add(card);
+        return outer;
+    }
+
+
 
 
 
