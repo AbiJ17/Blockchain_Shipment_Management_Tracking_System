@@ -47,7 +47,7 @@ public class MainUI extends JFrame {
     private JTextField csDescriptionField;
 
     // Track Shipment fields
-    private JTextField trackShipmentIdField;
+    private JTextField tsShipmentIdField;
 
     // Upload Document fields
     private JTextField udShipmentIdField;
@@ -377,16 +377,18 @@ public class MainUI extends JFrame {
     // ---------- Create Shipment card ----------
 
     private JComponent buildCreateShipmentCard(Color cardBg, Color text, Color accent, Color borderColor) {
-        JPanel outer = new JPanel(new GridBagLayout());
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(620, 280));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
+
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         JLabel title = new JLabel("Create Shipment");
         title.setForeground(text);
@@ -405,16 +407,18 @@ public class MainUI extends JFrame {
         createBtn.setBackground(accent);
         createBtn.setFocusPainted(false);
         createBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        createBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        createBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        createBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         createBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
         createBtn.addActionListener(e -> handleCreateShipment());
 
         card.add(Box.createVerticalStrut(20));
         card.add(createBtn);
 
-        outer.add(card);
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
+
 
     private void handleCreateShipment() {
         // Only shippers can create shipments
@@ -468,41 +472,37 @@ public class MainUI extends JFrame {
 
     // ---------- Track Shipment card ----------
 
-    // Class field (if you don't already have it)
-    private JTextField tsShipmentIdField;
-
-    // ---------- Track Shipment card ----------
     private JComponent buildTrackShipmentCard(Color cardBg, Color text, Color accent, Color borderColor) {
-        JPanel outer = new JPanel(new GridBagLayout());
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(620, 220));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
 
-        // Title is centered
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+
         JLabel title = new JLabel("Track Shipment");
         title.setForeground(text);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(title);
         card.add(Box.createVerticalStrut(18));
 
-        // Row for "Shipment ID" label + field, left-aligned
         JPanel row = new JPanel();
         row.setOpaque(false);
         row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
-        row.setAlignmentX(Component.LEFT_ALIGNMENT); // <- key: row anchored to the left
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel idLabel = new JLabel("Shipment ID");
         idLabel.setForeground(text);
 
         tsShipmentIdField = new JTextField();
-        tsShipmentIdField.setMaximumSize(new Dimension(260, 32));
+        tsShipmentIdField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
         tsShipmentIdField.setBackground(new Color(8, 14, 32));
         tsShipmentIdField.setForeground(text);
         tsShipmentIdField.setCaretColor(text);
@@ -517,24 +517,25 @@ public class MainUI extends JFrame {
         card.add(row);
         card.add(Box.createVerticalStrut(20));
 
-        // Button centered horizontally
         JButton trackBtn = new JButton("Track Shipment");
         trackBtn.setForeground(Color.WHITE);
         trackBtn.setBackground(accent);
         trackBtn.setFocusPainted(false);
         trackBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         trackBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
-        trackBtn.setAlignmentX(Component.CENTER_ALIGNMENT); // <- centers button
-        trackBtn.addActionListener(e -> handleTrackShipment()); // reuse your existing handler
+        trackBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        trackBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        trackBtn.addActionListener(e -> handleTrackShipment());
 
         card.add(trackBtn);
 
-        outer.add(card);
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
 
+
     private void handleTrackShipment() {
-        String shipmentId = trackShipmentIdField.getText().trim();
+        String shipmentId = tsShipmentIdField.getText().trim();
         if (shipmentId.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     "Shipment ID is required.",
@@ -564,16 +565,18 @@ public class MainUI extends JFrame {
     // ---------- Upload Document card ----------
 
     private JComponent buildUploadDocumentCard(Color cardBg, Color text, Color accent, Color borderColor) {
-        JPanel outer = new JPanel(new GridBagLayout());
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(720, 340));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
+
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         JLabel title = new JLabel("Upload Document");
         title.setForeground(text);
@@ -602,6 +605,7 @@ public class MainUI extends JFrame {
 
         JScrollPane contentScroll = new JScrollPane(udContentArea);
         contentScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        contentScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
         contentScroll.setBorder(BorderFactory.createLineBorder(borderColor, 1, true));
         card.add(contentScroll);
         card.add(Box.createVerticalStrut(18));
@@ -611,14 +615,17 @@ public class MainUI extends JFrame {
         uploadBtn.setBackground(accent);
         uploadBtn.setFocusPainted(false);
         uploadBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        uploadBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        uploadBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        uploadBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         uploadBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
         uploadBtn.addActionListener(e -> handleUploadDocument());
 
         card.add(uploadBtn);
-        outer.add(card);
+
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
+
 
     private void handleUploadDocument() {
         String shipmentId = udShipmentIdField.getText().trim();
@@ -656,16 +663,18 @@ public class MainUI extends JFrame {
     // ---------- Update Status card ----------
 
     private JComponent buildUpdateStatusCard(Color cardBg, Color text, Color accent, Color borderColor) {
-        JPanel outer = new JPanel(new GridBagLayout());
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(620, 280));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
+
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         JLabel title = new JLabel("Update Shipment Status");
         title.setForeground(text);
@@ -684,16 +693,18 @@ public class MainUI extends JFrame {
         updateBtn.setBackground(accent);
         updateBtn.setFocusPainted(false);
         updateBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        updateBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        updateBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        updateBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         updateBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
         updateBtn.addActionListener(e -> handleUpdateStatus());
 
         card.add(Box.createVerticalStrut(12));
         card.add(updateBtn);
 
-        outer.add(card);
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
+
 
     private void handleUpdateStatus() {
         String shipmentId = usShipmentIdField.getText().trim();
@@ -725,20 +736,22 @@ public class MainUI extends JFrame {
     // ---------- Query / Audit card (for auditors) ----------
 
     private JComponent buildQueryAuditCard(Color cardBg, Color text, Color accent, Color borderColor) {
-        JPanel outer = new JPanel(new GridBagLayout());
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(900, 380));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
 
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+
         JLabel title = new JLabel("Query Shipment / Audit");
         title.setForeground(text);
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 26f));
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 24f));
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         card.add(title);
@@ -746,15 +759,13 @@ public class MainUI extends JFrame {
 
         qaShipmentIdField = createLabeledField(card, "Shipment ID", text, borderColor);
 
-        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 18, 0));
+        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         buttonRow.setOpaque(false);
         buttonRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton queryBtn = new JButton("Query Shipment");
         queryBtn.setForeground(text);
         queryBtn.setBackground(new Color(15, 23, 42));
-        queryBtn.setFocusPainted(false);
-        queryBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         queryBtn.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(8, 18, 8, 18)));
@@ -762,8 +773,6 @@ public class MainUI extends JFrame {
         JButton auditBtn = new JButton("Generate Audit Trail");
         auditBtn.setForeground(text);
         auditBtn.setBackground(new Color(15, 23, 42));
-        auditBtn.setFocusPainted(false);
-        auditBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         auditBtn.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(8, 18, 8, 18)));
@@ -781,7 +790,6 @@ public class MainUI extends JFrame {
 
         JScrollPane resultScroll = new JScrollPane(qaResultArea);
         resultScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-        resultScroll.setBorder(BorderFactory.createLineBorder(borderColor, 1, true));
 
         queryBtn.addActionListener(e -> handleQueryShipment());
         auditBtn.addActionListener(e -> handleGenerateAudit());
@@ -790,9 +798,10 @@ public class MainUI extends JFrame {
         card.add(Box.createVerticalStrut(12));
         card.add(resultScroll);
 
-        outer.add(card);
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
+
 
     private void handleQueryShipment() {
         String shipmentId = qaShipmentIdField.getText().trim();
@@ -828,44 +837,48 @@ public class MainUI extends JFrame {
     }
 
     // ---------- Confirm Delivery card ----------
-
+    
     private JComponent buildConfirmDeliveryCard(Color cardBg, Color text, Color accent, Color borderColor) {
-        JPanel outer = new JPanel(new GridBagLayout());
+
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(620, 220));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
+
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel title = new JLabel("Confirm Delivery");
         title.setForeground(text);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
-
         card.add(title);
         card.add(Box.createVerticalStrut(18));
 
         cdShipmentIdField = createLabeledField(card, "Shipment ID", text, borderColor);
+        cdShipmentIdField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
 
         JButton confirmBtn = new JButton("Confirm Delivery");
-        confirmBtn.setForeground(text);
-        confirmBtn.setBackground(new Color(15, 23, 42));
+        confirmBtn.setForeground(Color.WHITE);
+        confirmBtn.setBackground(accent);
         confirmBtn.setFocusPainted(false);
         confirmBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        confirmBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        confirmBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        confirmBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         confirmBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
         confirmBtn.addActionListener(e -> handleConfirmDelivery());
 
         card.add(Box.createVerticalStrut(12));
         card.add(confirmBtn);
 
-        outer.add(card);
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
+
 
     private void handleConfirmDelivery() {
 
@@ -901,26 +914,28 @@ public class MainUI extends JFrame {
     // ---------- Raise Dispute Card ----------
 
     private JComponent buildRaiseDisputeCard(Color cardBg, Color text, Color accent, Color borderColor) {
-        JPanel outer = new JPanel(new GridBagLayout());
+
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(720, 340));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
+
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel title = new JLabel("Raise Dispute");
         title.setForeground(text);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
-
         card.add(title);
         card.add(Box.createVerticalStrut(18));
 
         rdShipmentIdField = createLabeledField(card, "Shipment ID", text, borderColor);
+        rdShipmentIdField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
 
         JLabel descLabel = new JLabel("Dispute Description");
         descLabel.setForeground(text);
@@ -935,10 +950,12 @@ public class MainUI extends JFrame {
         rdDescriptionArea.setForeground(text);
         rdDescriptionArea.setCaretColor(text);
         rdDescriptionArea.setBorder(new LineBorder(borderColor, 1, true));
+        rdDescriptionArea.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JScrollPane scroll = new JScrollPane(rdDescriptionArea);
         scroll.setBorder(new LineBorder(borderColor, 1, true));
         scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        scroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
         card.add(scroll);
         card.add(Box.createVerticalStrut(18));
 
@@ -947,14 +964,16 @@ public class MainUI extends JFrame {
         raiseBtn.setBackground(accent);
         raiseBtn.setFocusPainted(false);
         raiseBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        raiseBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        raiseBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        raiseBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         raiseBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
         raiseBtn.addActionListener(e -> handleRaiseDispute());
 
         card.add(raiseBtn);
-        outer.add(card);
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
+
 
     private void handleRaiseDispute() {
         if (!(currentUser instanceof Buyer)) {
@@ -990,16 +1009,18 @@ public class MainUI extends JFrame {
     // ---------- Verify Document Card ----------
 
     private JComponent buildVerifyDocumentCard(Color cardBg, Color text, Color accent, Color borderColor) {
-        JPanel outer = new JPanel(new GridBagLayout());
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(720, 320));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
+
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         JLabel title = new JLabel("Verify Document Integrity");
         title.setForeground(text);
@@ -1010,21 +1031,27 @@ public class MainUI extends JFrame {
         card.add(Box.createVerticalStrut(18));
 
         vdShipmentIdField = createLabeledField(card, "Shipment ID", text, borderColor);
+        vdShipmentIdField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+
         vdDocNameField = createLabeledField(card, "Document Name", text, borderColor);
+        vdDocNameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
 
         JButton verifyBtn = new JButton("Verify Document");
         verifyBtn.setForeground(Color.WHITE);
         verifyBtn.setBackground(accent);
         verifyBtn.setFocusPainted(false);
         verifyBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        verifyBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        verifyBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        verifyBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         verifyBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
         verifyBtn.addActionListener(e -> handleVerifyDocument());
 
         card.add(verifyBtn);
-        outer.add(card);
+
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
+
 
     private void handleVerifyDocument() {
         String shipmentId = vdShipmentIdField.getText().trim();
@@ -1050,39 +1077,40 @@ public class MainUI extends JFrame {
     // ---------- Clearance Approval card ----------
 
     private JComponent buildClearanceApprovalCard(Color cardBg, Color text, Color accent, Color borderColor) {
-        JPanel outer = new JPanel(new GridBagLayout());
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(620, 300));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
 
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+
         JLabel title = new JLabel("Customs Clearance Approval");
         title.setForeground(text);
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         card.add(title);
         card.add(Box.createVerticalStrut(20));
 
         JTextField shipmentIdField = createLabeledField(card, "Shipment ID", text, borderColor);
+        shipmentIdField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
 
-        JTextField decisionField = createLabeledField(
-                card,
-                "Decision (APPROVE / REJECT)",
-                text,
-                borderColor);
+        JTextField decisionField = createLabeledField(card, "Decision (APPROVE / REJECT)", text, borderColor);
+        decisionField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
 
         JButton approveBtn = new JButton("Submit Clearance");
         approveBtn.setForeground(Color.WHITE);
         approveBtn.setBackground(accent);
         approveBtn.setFocusPainted(false);
         approveBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        approveBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        approveBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        approveBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         approveBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
 
         approveBtn.addActionListener(e -> {
@@ -1090,25 +1118,19 @@ public class MainUI extends JFrame {
             String decision = decisionField.getText().trim().toUpperCase();
 
             if (shipmentId.isEmpty() || decision.isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                        "Shipment ID and decision are required.",
-                        "Missing data",
-                        JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Shipment ID and decision are required.",
+                        "Missing data", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             Shipment shipment = lifecycleController.findShipmentById(shipmentId);
             if (shipment == null) {
-                JOptionPane.showMessageDialog(this,
-                        "Shipment not found.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Shipment not found.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Smart contract customs rule
             String result = complianceController.approveClearance(shipment, decision);
-
             log("Clearance decision: " + result);
             JOptionPane.showMessageDialog(this, result, "Clearance", JOptionPane.INFORMATION_MESSAGE);
         });
@@ -1116,40 +1138,44 @@ public class MainUI extends JFrame {
         card.add(Box.createVerticalStrut(20));
         card.add(approveBtn);
 
-        outer.add(card);
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
+
 
     // ---------- Compliance Report card ----------
 
     private JComponent buildComplianceReportCard(Color cardBg, Color text, Color accent, Color borderColor) {
-        JPanel outer = new JPanel(new GridBagLayout());
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(720, 350));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
 
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+
         JLabel title = new JLabel("Generate Compliance Report");
         title.setForeground(text);
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
-
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(title);
         card.add(Box.createVerticalStrut(20));
 
         JTextField filterField = createLabeledField(card, "Filter (optional)", text, borderColor);
+        filterField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
 
         JButton generateBtn = new JButton("Generate Report");
         generateBtn.setForeground(Color.WHITE);
         generateBtn.setBackground(accent);
         generateBtn.setFocusPainted(false);
         generateBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        generateBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        generateBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        generateBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         generateBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
 
         JTextArea reportArea = new JTextArea(8, 50);
@@ -1159,17 +1185,16 @@ public class MainUI extends JFrame {
         reportArea.setBackground(new Color(8, 14, 32));
         reportArea.setForeground(text);
         reportArea.setBorder(new LineBorder(borderColor, 1, true));
+        reportArea.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JScrollPane scroll = new JScrollPane(reportArea);
-        scroll.setBorder(new LineBorder(borderColor, 1, true));
         scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        scroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
 
         generateBtn.addActionListener(e -> {
             String filter = filterField.getText().trim();
-
             Report report = complianceController.generateComplianceSummary(filter);
             reportArea.setText(report.toString());
-
             log("Compliance report generated");
         });
 
@@ -1177,34 +1202,39 @@ public class MainUI extends JFrame {
         card.add(Box.createVerticalStrut(12));
         card.add(scroll);
 
-        outer.add(card);
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
 
-    // ---------- Fraud Detection card ----------
 
+    // ---------- Fraud Detection card ----------
     private JComponent buildFraudDetectionCard(Color cardBg, Color text, Color accent, Color borderColor) {
-        JPanel outer = new JPanel(new GridBagLayout());
+
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(720, 300));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
+
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         JLabel title = new JLabel("Fraud Detection");
         title.setForeground(text);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
-
         card.add(title);
         card.add(Box.createVerticalStrut(18));
 
+        // Shipment input field (already left-aligned via createLabeledField)
         JTextField fdShipmentField = createLabeledField(card, "Shipment ID", text, borderColor);
+        fdShipmentField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
 
+        // Result box
         JTextArea fdResultArea = new JTextArea(6, 50);
         fdResultArea.setEditable(false);
         fdResultArea.setLineWrap(true);
@@ -1212,9 +1242,12 @@ public class MainUI extends JFrame {
         fdResultArea.setBackground(new Color(8, 14, 32));
         fdResultArea.setForeground(text);
         fdResultArea.setBorder(new LineBorder(borderColor, 1, true));
+        fdResultArea.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JScrollPane resultScroll = new JScrollPane(fdResultArea);
         resultScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        resultScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+
         card.add(resultScroll);
         card.add(Box.createVerticalStrut(18));
 
@@ -1223,7 +1256,8 @@ public class MainUI extends JFrame {
         analyzeBtn.setBackground(accent);
         analyzeBtn.setFocusPainted(false);
         analyzeBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        analyzeBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        analyzeBtn.setAlignmentX(Component.LEFT_ALIGNMENT); 
+        analyzeBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40)); 
         analyzeBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
 
         analyzeBtn.addActionListener(e -> {
@@ -1236,9 +1270,10 @@ public class MainUI extends JFrame {
 
         card.add(analyzeBtn);
 
-        outer.add(card);
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
+
 
     private String handleFraudDetection(Shipment shipment) {
         if (shipment == null)
@@ -1260,22 +1295,23 @@ public class MainUI extends JFrame {
 
     private JComponent buildManageUsersCard(Color cardBg, Color text, Color accent, Color borderColor) {
 
-        JPanel outer = new JPanel(new GridBagLayout());
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(720, 350));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
+
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         JLabel title = new JLabel("Manage Users");
         title.setForeground(text);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
-
         card.add(title);
         card.add(Box.createVerticalStrut(12));
 
@@ -1283,9 +1319,8 @@ public class MainUI extends JFrame {
         String[] columns = { "Username", "Role", "Email" };
         DefaultTableModel model = new DefaultTableModel(columns, 0);
 
-        // Populate table (assumes LoginFrame or MainUI has user list)
-        for (User u : LoginFrame.demoUsersStatic()) { // Add a static getter in LoginFrame
-            model.addRow(new Object[] { u.getUsername(), u.getRole(), u.getEmail() });
+        for (User u : LoginFrame.demoUsersStatic()) {
+            model.addRow(new Object[]{u.getUsername(), u.getRole(), u.getEmail()});
         }
 
         JTable table = new JTable(model);
@@ -1295,13 +1330,16 @@ public class MainUI extends JFrame {
 
         JScrollPane tableScroll = new JScrollPane(table);
         tableScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        tableScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150)); 
+
         card.add(tableScroll);
         card.add(Box.createVerticalStrut(18));
 
         JButton deleteBtn = new JButton("Delete Selected User");
         deleteBtn.setForeground(Color.WHITE);
         deleteBtn.setBackground(accent);
-        deleteBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        deleteBtn.setAlignmentX(Component.LEFT_ALIGNMENT); 
+        deleteBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40)); 
         deleteBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
 
         deleteBtn.addActionListener(e -> {
@@ -1312,7 +1350,7 @@ public class MainUI extends JFrame {
             }
 
             String username = model.getValueAt(row, 0).toString();
-            LoginFrame.deleteUserStatic(username); // add static method in LoginFrame
+            LoginFrame.deleteUserStatic(username);
             model.removeRow(row);
 
             log("User deleted: " + username);
@@ -1320,24 +1358,27 @@ public class MainUI extends JFrame {
 
         card.add(deleteBtn);
 
-        outer.add(card);
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
+
 
     // ---------- Assign Roles card ----------
 
     private JComponent buildAssignRolesCard(Color cardBg, Color text, Color accent, Color borderColor) {
 
-        JPanel outer = new JPanel(new GridBagLayout());
+        JPanel outer = new JPanel(new BorderLayout());
         outer.setOpaque(false);
 
         JPanel card = new JPanel();
         card.setBackground(cardBg);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(620, 300));
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, 1, true),
                 new EmptyBorder(28, 48, 28, 48)));
+
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         JLabel title = new JLabel("Assign Roles");
         title.setForeground(text);
@@ -1346,26 +1387,32 @@ public class MainUI extends JFrame {
         card.add(title);
         card.add(Box.createVerticalStrut(18));
 
+        // ---- USER SELECT ----
         JComboBox<String> userSelect = new JComboBox<>();
         for (User u : LoginFrame.demoUsersStatic()) {
             userSelect.addItem(u.getUsername());
         }
         userSelect.setAlignmentX(Component.LEFT_ALIGNMENT);
+        userSelect.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
         card.add(userSelect);
         card.add(Box.createVerticalStrut(12));
 
-        JComboBox<String> roleSelect = new JComboBox<>(new String[] {
+        // ---- ROLE SELECT ----
+        JComboBox<String> roleSelect = new JComboBox<>(new String[]{
                 "SHIPPER", "BUYER", "LOGISTICS_PROVIDER", "WAREHOUSE",
                 "CUSTOMS_OFFICER", "AUDITOR", "ADMIN"
         });
         roleSelect.setAlignmentX(Component.LEFT_ALIGNMENT);
+        roleSelect.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
         card.add(roleSelect);
         card.add(Box.createVerticalStrut(18));
 
+        // ---- BUTTON ----
         JButton assignBtn = new JButton("Assign Role");
         assignBtn.setForeground(Color.WHITE);
         assignBtn.setBackground(accent);
-        assignBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        assignBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        assignBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         assignBtn.setBorder(BorderFactory.createEmptyBorder(10, 28, 10, 28));
 
         assignBtn.addActionListener(e -> {
@@ -1382,7 +1429,7 @@ public class MainUI extends JFrame {
 
         card.add(assignBtn);
 
-        outer.add(card);
+        outer.add(card, BorderLayout.NORTH);
         return outer;
     }
 
