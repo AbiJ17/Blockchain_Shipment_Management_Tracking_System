@@ -10,21 +10,21 @@ public class Shipment {
     private String origin;
     private String destination;
     private String description;
-    private String status; // no ShipmentStatus enum anymore
+    private String status;
     private Date dispatchDate;
     private Date deliveryDate;
 
     private final List<Document> documents = new ArrayList<>();
     private final List<Event> history = new ArrayList<>();
 
-    // ✅ this is the constructor Shipper.createShipment(...) expects:
+    // Constructor
     public Shipment(String shipmentID, String origin, String destination, String description) {
         this.shipmentID = shipmentID;
         this.origin = origin;
         this.destination = destination;
         this.description = description;
         this.status = "CREATED";
-        this.dispatchDate = new Date(); // when created
+        this.dispatchDate = new Date(); 
         addHistoryEvent("Shipment created: " + description);
     }
 
@@ -94,7 +94,6 @@ public class Shipment {
         return history;
     }
 
-    // ✅ PUBLIC so Shipper can call it
     public void addHistoryEvent(String message) {
         history.add(new Event(new Date(), message));
     }
