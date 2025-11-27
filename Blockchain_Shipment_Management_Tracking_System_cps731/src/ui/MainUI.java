@@ -15,6 +15,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * MainUI
@@ -72,6 +74,9 @@ public class MainUI extends JFrame {
     // Verify Document Fields
     private JTextField vdShipmentIdField;
     private JTextField vdDocNameField;
+
+    // Static memory that persists until FULL application exit
+    private static final List<String> rememberedShipmentIds = new ArrayList<>(); 
 
     private final DateTimeFormatter logTimeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -419,7 +424,6 @@ public class MainUI extends JFrame {
         return outer;
     }
 
-
     private void handleCreateShipment() {
         // Only shippers can create shipments
         if (!(currentUser instanceof Shipper)) {
@@ -448,20 +452,17 @@ public class MainUI extends JFrame {
 
         // Simple ID generator for the UI
         String shipmentId = "S" + System.currentTimeMillis();
-
         Shipment shipment = lifecycleController.createShipment(
-                shipper,
-                shipmentId,
-                origin,
-                destination,
-                description);
+            shipper, shipmentId, origin, destination, description);
 
-        log("Shipment created: " + shipment.getShipmentId()
-                + " by " + currentUser.getUsername());
+        // store in memory
+        rememberShipmentId(shipmentId);
+
+        log("Shipment created: " + shipment.getShipmentID() + " by " + currentUser.getUsername());
 
         JOptionPane.showMessageDialog(
                 this,
-                "Shipment created with ID: " + shipment.getShipmentId(),
+                "Shipment created with ID: " + shipment.getShipmentID(),
                 "Created",
                 JOptionPane.INFORMATION_MESSAGE);
 
@@ -545,8 +546,10 @@ public class MainUI extends JFrame {
         }
 
         Shipment shipment = lifecycleController.findShipmentById(shipmentId);
-        if (shipment == null) {
-            JOptionPane.showMessageDialog(this,
+        if (shipment != null) {
+            rememberShipmentId(shipmentId);
+        } else { 
+             JOptionPane.showMessageDialog(this,
                     "Shipment not found.",
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
@@ -626,7 +629,6 @@ public class MainUI extends JFrame {
         return outer;
     }
 
-
     private void handleUploadDocument() {
         String shipmentId = udShipmentIdField.getText().trim();
         String docName = udDocNameField.getText().trim();
@@ -641,8 +643,10 @@ public class MainUI extends JFrame {
         }
 
         Shipment shipment = lifecycleController.findShipmentById(shipmentId);
-        if (shipment == null) {
-            JOptionPane.showMessageDialog(this,
+        if (shipment != null) {
+            rememberShipmentId(shipmentId);
+        } else { 
+             JOptionPane.showMessageDialog(this,
                     "Shipment not found.",
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
@@ -717,10 +721,12 @@ public class MainUI extends JFrame {
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
-
+        
         Shipment shipment = lifecycleController.findShipmentById(shipmentId);
-        if (shipment == null) {
-            JOptionPane.showMessageDialog(this,
+        if (shipment != null) {
+            rememberShipmentId(shipmentId);
+        } else { 
+             JOptionPane.showMessageDialog(this,
                     "Shipment not found.",
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
@@ -814,6 +820,16 @@ public class MainUI extends JFrame {
         }
 
         Shipment shipment = lifecycleController.findShipmentById(shipmentId);
+        if (shipment != null) {
+            rememberShipmentId(shipmentId);
+        } else { 
+             JOptionPane.showMessageDialog(this,
+                    "Shipment not found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
         String result = complianceController.queryShipmentStatus(shipment);
         qaResultArea.setText(result);
         log("Query shipment " + shipmentId + " → " + result);
@@ -898,8 +914,13 @@ public class MainUI extends JFrame {
         }
 
         Shipment shipment = lifecycleController.findShipmentById(shipmentId);
-        if (shipment == null) {
-            JOptionPane.showMessageDialog(this, "Shipment not found.", "Error", JOptionPane.ERROR_MESSAGE);
+        if (shipment != null) {
+            rememberShipmentId(shipmentId);
+        } else { 
+             JOptionPane.showMessageDialog(this,
+                    "Shipment not found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -992,8 +1013,13 @@ public class MainUI extends JFrame {
         }
 
         Shipment shipment = lifecycleController.findShipmentById(shipmentId);
-        if (shipment == null) {
-            JOptionPane.showMessageDialog(this, "Shipment not found.", "Error", JOptionPane.ERROR_MESSAGE);
+        if (shipment != null) {
+            rememberShipmentId(shipmentId);
+        } else { 
+             JOptionPane.showMessageDialog(this,
+                    "Shipment not found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -1064,8 +1090,13 @@ public class MainUI extends JFrame {
         }
 
         Shipment shipment = lifecycleController.findShipmentById(shipmentId);
-        if (shipment == null) {
-            JOptionPane.showMessageDialog(this, "Shipment not found.", "Error", JOptionPane.ERROR_MESSAGE);
+        if (shipment != null) {
+            rememberShipmentId(shipmentId);
+        } else { 
+            JOptionPane.showMessageDialog(this,
+                    "Shipment not found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -1124,9 +1155,13 @@ public class MainUI extends JFrame {
             }
 
             Shipment shipment = lifecycleController.findShipmentById(shipmentId);
-            if (shipment == null) {
-                JOptionPane.showMessageDialog(this, "Shipment not found.",
-                        "Error", JOptionPane.ERROR_MESSAGE);
+            if (shipment != null) {
+                rememberShipmentId(shipmentId);
+            } else { 
+                JOptionPane.showMessageDialog(this,
+                        "Shipment not found.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -1432,6 +1467,25 @@ public class MainUI extends JFrame {
         outer.add(card, BorderLayout.NORTH);
         return outer;
     }
+
+    /** Store shipment ID (avoid duplicates) */
+    public static void rememberShipmentId(String id) {
+        if (id != null && !id.isBlank() && !rememberedShipmentIds.contains(id)) {
+            rememberedShipmentIds.add(id);
+        }
+    }
+
+    /** Get all remembered IDs */
+    public static List<String> getRememberedShipmentIds() {
+        return new ArrayList<>(rememberedShipmentIds); // return copy
+    }
+
+    /** Get the most recent shipment ID */
+    public static String getLastShipmentId() {
+        if (rememberedShipmentIds.isEmpty()) return null;
+        return rememberedShipmentIds.get(rememberedShipmentIds.size() - 1);
+    }
+
 
     // ---------- Logout ----------
     private void doLogout() {

@@ -35,7 +35,7 @@ public class ShipmentComplianceController {
         if (shipment == null) {
             return "Shipment not found.";
         }
-        return "Shipment " + shipment.getShipmentId() +
+        return "Shipment " + shipment.getShipmentID() +
                 " status: " + shipment.getStatus();
     }
 
@@ -45,7 +45,7 @@ public class ShipmentComplianceController {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("Audit trail for shipment ").append(shipment.getShipmentId()).append("\n\n");
+        sb.append("Audit trail for shipment ").append(shipment.getShipmentID()).append("\n\n");
 
         List<model.Event> history = shipment.getHistory();
         for (model.Event e : history) {
@@ -56,9 +56,9 @@ public class ShipmentComplianceController {
         }
 
         // Simulate querying blockchain
-        blockchainGateway.queryLedger("AuditTrail#" + shipment.getShipmentId());
+        blockchainGateway.queryLedger("AuditTrail#" + shipment.getShipmentID());
 
-        return new Report("Audit Trail - Shipment " + shipment.getShipmentId(), sb.toString());
+        return new Report("Audit Trail - Shipment " + shipment.getShipmentID(), sb.toString());
     }
 
     public boolean ensureLedgerIntegrity(Shipment shipment) {
@@ -76,16 +76,16 @@ public class ShipmentComplianceController {
 
         // Smart contract validation
         if (!smartContract.canRaiseDispute(shipment)) {
-            return "Smart contract rejected dispute for shipment " + shipment.getShipmentId();
+            return "Smart contract rejected dispute for shipment " + shipment.getShipmentID();
         }
 
         shipment.addHistoryEvent("Dispute raised: " + description);
 
         // Blockchain log
         blockchainGateway.connect();
-        blockchainGateway.sendTransaction("DISPUTE#" + shipment.getShipmentId());
+        blockchainGateway.sendTransaction("DISPUTE#" + shipment.getShipmentID());
 
-        return "Dispute filed for shipment " + shipment.getShipmentId();
+        return "Dispute filed for shipment " + shipment.getShipmentID();
     }
 
     public String verifyDocument(Shipment shipment, String documentName) {
@@ -122,9 +122,9 @@ public class ShipmentComplianceController {
 
         shipment.addHistoryEvent("Customs clearance: " + decision);
 
-        blockchainGateway.sendTransaction("CLEARANCE#" + shipment.getShipmentId() + "#" + decision);
+        blockchainGateway.sendTransaction("CLEARANCE#" + shipment.getShipmentID() + "#" + decision);
 
-        return "Clearance " + decision + " recorded for shipment " + shipment.getShipmentId();
+        return "Clearance " + decision + " recorded for shipment " + shipment.getShipmentID();
     }
 
     public Report generateComplianceSummary(String filter) {

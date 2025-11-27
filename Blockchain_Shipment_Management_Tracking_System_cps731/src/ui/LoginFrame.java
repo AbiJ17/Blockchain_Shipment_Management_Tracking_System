@@ -34,8 +34,8 @@ public class LoginFrame extends JFrame {
     private final OffChainStorage offChainStorage;
     private final OffChainStorageAdapter offChainAdapter;
     private final SmartContract smartContract;
-    private final ShipmentLifecycleController lifecycleController;
-    private final ShipmentComplianceController complianceController;
+    private static ShipmentLifecycleController lifecycleController;
+    private static ShipmentComplianceController complianceController;
 
     public LoginFrame() {
         // ---------- Backend wiring (single instance for whole app) ----------
@@ -46,15 +46,21 @@ public class LoginFrame extends JFrame {
         offChainAdapter = new OffChainStorageAdapter(offChainStorage);
 
         smartContract = new SmartContract();
-        lifecycleController = new ShipmentLifecycleController(
+
+        if (lifecycleController == null) { 
+                lifecycleController = new ShipmentLifecycleController(
                 blockchainGateway,
                 offChainAdapter,
                 smartContract);
-        complianceController = new ShipmentComplianceController(
-                blockchainNetwork,
-                blockchainGateway,
-                offChainAdapter,
-                smartContract);
+        }
+
+        if (complianceController == null) { 
+            complianceController = new ShipmentComplianceController(
+                    blockchainNetwork,
+                    blockchainGateway,
+                    offChainAdapter,
+                    smartContract);
+        }
 
         seedDemoUsers();
         demoUsersStaticRef = demoUsers;
@@ -220,8 +226,7 @@ public class LoginFrame extends JFrame {
                 "shipper",
                 "shipper@example.com",
                 "Global Shipper Inc.", // companyName
-                "123 Dock Street", // address
-                "Primary Shipper" // shipperRole
+                "123 Dock Street" // address
         );
         demoUsers.add(shipper);
 

@@ -32,21 +32,21 @@ public class ShipmentLifecycleController {
      * Create and register a new shipment. Called from the Create Shipment screen.
      */
     public Shipment createShipment(Shipper shipper,
-            String shipmentId,
+            String shipmentID,
             String origin,
             String destination,
             String description) {
 
-        Shipment shipment = new Shipment(shipmentId, origin, destination, description);
+        Shipment shipment = new Shipment(shipmentID, origin, destination, description);
         shipment.setStatus("CREATED");
         shipment.addHistoryEvent("Shipment created by shipper " +
                 (shipper != null ? shipper.getUsername() : "system"));
 
-        shipments.put(shipmentId, shipment);
+        shipments.put(shipmentID, shipment);
 
         // Simulate writing a transaction to the blockchain
         blockchainGateway.connect();
-        blockchainGateway.sendTransaction("CREATE#" + shipmentId);
+        blockchainGateway.sendTransaction("CREATE#" + shipmentID);
 
         return shipment;
     }
@@ -70,7 +70,7 @@ public class ShipmentLifecycleController {
         // Smart-contract rule check
         if (!smartContract.canUpdateStatus(shipment, newStatus)) {
             return "Smart contract rejected status change for shipment " +
-                    shipment.getShipmentId();
+                    shipment.getShipmentID();
         }
 
         shipment.setStatus(newStatus);
@@ -78,10 +78,10 @@ public class ShipmentLifecycleController {
 
         // Simulate blockchain event
         blockchainGateway.connect();
-        blockchainGateway.sendTransaction("STATUS#" + shipment.getShipmentId() +
+        blockchainGateway.sendTransaction("STATUS#" + shipment.getShipmentID() +
                 "#" + newStatus);
 
-        return "Shipment " + shipment.getShipmentId() +
+        return "Shipment " + shipment.getShipmentID() +
                 " status updated to " + newStatus;
     }
 
@@ -128,9 +128,9 @@ public class ShipmentLifecycleController {
 
         // Emit blockchain event
         blockchainGateway.connect();
-        blockchainGateway.sendTransaction("DELIVERED#" + shipment.getShipmentId());
+        blockchainGateway.sendTransaction("DELIVERED#" + shipment.getShipmentID());
 
-        return "Shipment " + shipment.getShipmentId() + " marked as DELIVERED.";
+        return "Shipment " + shipment.getShipmentID() + " marked as DELIVERED.";
     }
 
 }

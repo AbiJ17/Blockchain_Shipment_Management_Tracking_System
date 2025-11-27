@@ -4,7 +4,6 @@ public class Shipper extends User {
 
     private String companyName;
     private String address;
-    private String shipperRole;
 
     // DEFAULT CONSTRUCTOR (required for LoginFrame seedDemoUsers)
     public Shipper() {
@@ -18,13 +17,11 @@ public class Shipper extends User {
             String password,
             String email,
             String companyName,
-            String address,
-            String shipperRole) {
+            String address) {
 
         super(userID, username, password, "SHIPPER", email);
         this.companyName = companyName;
         this.address = address;
-        this.shipperRole = shipperRole;
     }
 
     // METHODS USED IN CONTROLLERS (no change needed)
@@ -65,13 +62,5 @@ public class Shipper extends User {
 
     public void setAddress(String address) {
         this.address = address;
-    }
-
-    public String getShipperRole() {
-        return shipperRole;
-    }
-
-    public void setShipperRole(String shipperRole) {
-        this.shipperRole = shipperRole;
     }
 }

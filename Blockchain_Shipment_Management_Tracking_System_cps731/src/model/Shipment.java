@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Shipment {
 
-    private final String shipmentId;
+    private String shipmentID;
     private String origin;
     private String destination;
     private String description;
@@ -18,8 +18,8 @@ public class Shipment {
     private final List<Event> history = new ArrayList<>();
 
     // ✅ this is the constructor Shipper.createShipment(...) expects:
-    public Shipment(String shipmentId, String origin, String destination, String description) {
-        this.shipmentId = shipmentId;
+    public Shipment(String shipmentID, String origin, String destination, String description) {
+        this.shipmentID = shipmentID;
         this.origin = origin;
         this.destination = destination;
         this.description = description;
@@ -30,8 +30,12 @@ public class Shipment {
 
     // --- core getters/setters ---
 
-    public String getShipmentId() {
-        return shipmentId;
+    public String getShipmentID() {
+        return shipmentID;
+    }
+
+    public void setShipmentID(String shipmentID) { 
+        this.shipmentID = shipmentID; 
     }
 
     public String getOrigin() {
