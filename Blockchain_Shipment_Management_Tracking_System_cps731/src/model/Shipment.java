@@ -16,7 +16,7 @@ public class Shipment {
     private Date expDeliveryDate;
 
     private final List<Document> documents = new ArrayList<>();
-    private final List<Event> history = new ArrayList<>();
+    private List<Event> history = new ArrayList<>();
 
     // Constructor
     public Shipment(String shipmentID, String origin, String destination, String description) {
@@ -25,18 +25,26 @@ public class Shipment {
         this.destination = destination;
         this.description = description;
         this.status = "CREATED";
-        this.dispatchDate = new Date(); 
+        this.dispatchDate = new Date();
         addHistoryEvent("Shipment created: " + description);
     }
 
     // --- core getters/setters ---
 
+    public void addEvent(String message) {
+        if (history == null) {
+            history = new ArrayList<>();
+        }
+        history.add(new Event(new Date(), message));
+        this.status = message; // optional: update status automatically
+    }
+
     public String getShipmentID() {
         return shipmentID;
     }
 
-    public void setShipmentID(String shipmentID) { 
-        this.shipmentID = shipmentID; 
+    public void setShipmentID(String shipmentID) {
+        this.shipmentID = shipmentID;
     }
 
     public String getOrigin() {
@@ -86,7 +94,6 @@ public class Shipment {
     public void setExpectedDeliveryDate(Date expDeliveryDate) {
         this.expDeliveryDate = expDeliveryDate;
     }
-
 
     public Date getActualDeliveryDate() {
         return actDeliveryDate;

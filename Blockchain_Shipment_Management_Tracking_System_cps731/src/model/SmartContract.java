@@ -117,8 +117,7 @@ public class SmartContract {
         }
 
         // Approval must follow logical customs workflow
-        boolean allowedForApproval =
-                status.equals("CREATED") ||
+        boolean allowedForApproval = status.equals("CREATED") ||
                 status.equals("IN_TRANSIT") ||
                 status.equals("AT_BORDER") ||
                 status.equals("AT_WAREHOUSE");
@@ -147,15 +146,15 @@ public class SmartContract {
 
         // Condition 2: Delayed delivery
         else if (shipment.getExpectedDeliveryDate() != null &&
-            shipment.getActualDeliveryDate() != null &&
-            shipment.getActualDeliveryDate().after(shipment.getExpectedDeliveryDate())) {
+                shipment.getActualDeliveryDate() != null &&
+                shipment.getActualDeliveryDate().after(shipment.getExpectedDeliveryDate())) {
             return true;
         }
 
         // Condition 3: Non-delivery by deadline
         else if (shipment.getExpectedDeliveryDate() != null &&
-            shipment.getActualDeliveryDate() == null &&
-            new Date().after(shipment.getExpectedDeliveryDate())) {
+                shipment.getActualDeliveryDate() == null &&
+                new Date().after(shipment.getExpectedDeliveryDate())) {
             return true;
         }
 
