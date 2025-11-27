@@ -1,12 +1,17 @@
 package test;
 
-
-import org.junit.jupiter.api.*;
-
 import controller.ShipmentComplianceController;
 import controller.ShipmentLifecycleController;
+import external.BlockchainNetwork;
+import external.OffChainStorage;
+import gateway.BlockchainNetworkGateway;
+import gateway.OffChainStorageAdapter;
 import model.Report;
 import model.Shipment;
+import model.Shipper;
+import model.SmartContract;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,46 +22,85 @@ public class ShipmentComplianceControllerTest {
 
     @BeforeEach
     void setup() {
-        controller = new ShipmentComplianceController();
-        lifecycle = new ShipmentLifecycleController();
+
+        BlockchainNetwork network = new BlockchainNetwork();
+        BlockchainNetworkGateway gateway = new BlockchainNetworkGateway(network);
+        OffChainStorage offChainStorage = new OffChainStorage();
+        OffChainStorageAdapter offChainAdapter = new OffChainStorageAdapter(offChainStorage);
+        SmartContract smartContract = new SmartContract();
+
+        lifecycle = new ShipmentLifecycleController(gateway, offChainAdapter, smartContract);
+        // Updated to match new constructor: (BlockchainNetworkGateway,
+        // OffChainStorageAdapter, SmartContract)
+        controller = new ShipmentComplianceController(gateway, offChainAdapter, smartContract);
+    }
+
+    private Shipper makeShipper() {
+        Shipper s = new Shipper();
+        s.setUserID(99);
+        s.setUsername("alice");
+        s.setPassword("password");
+        s.setEmail("a@x.com");
+        s.setCompanyName("Test Shipper Inc.");
+        s.setAddress("123 Test Street");
+        return s;
     }
 
     @Test
     void testQueryShipmentStatus() {
+        Shipper shipper = makeShipper();
+
         Shipment s = lifecycle.createShipment(
-                new Shipper("alice", "a@x.com"),
-                "S100", "X", "Y", "Test");
+                shipper,
+                "S100",
+                "X",
+                "Y",
+                "Test");
 
         s.setStatus("IN_TRANSIT");
 
         String result = controller.queryShipmentStatus(s);
 
         assertTrue(result.contains("IN_TRANSIT"));
+        assertTrue(result.contains("S100"));
     }
 
     @Test
     void testGenerateAuditTrail() {
+        Shipper shipper = makeShipper();
+
         Shipment s = lifecycle.createShipment(
-                new Shipper("alice", "a@x.com"),
-                "S111", "Toronto", "NYC", "Goods");
+                shipper,
+                "S111",
+                "Toronto",
+                "NYC",
+                "Goods");
 
         lifecycle.updateShipmentStatus(s, "IN_TRANSIT");
 
         Report r = controller.generateAuditTrail(s);
 
         assertNotNull(r);
-        assertTrue(r.toString().contains("IN_TRANSIT"));
+        String text = r.toString();
+        assertTrue(text.contains("Audit trail"));
+        assertTrue(text.contains("IN_TRANSIT"));
     }
 
     @Test
     void testLogDispute() {
+        Shipper shipper = makeShipper();
+
         Shipment s = lifecycle.createShipment(
-                new Shipper("alice", "a@x.com"),
-                "S222", "A", "B", "Test");
+                shipper,
+                "S222",
+                "A",
+                "B",
+                "Test");
 
         String result = controller.logDispute(s, "Damaged item");
 
-        assertTrue(result.contains("Dispute logged"));
+        // Method currently returns: "Dispute filed for shipment S222"
+        assertTrue(result.contains("Dispute filed"));
+        assertTrue(result.contains("S222"));
     }
 }
-

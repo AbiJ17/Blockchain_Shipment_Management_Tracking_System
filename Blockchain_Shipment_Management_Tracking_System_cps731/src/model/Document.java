@@ -16,17 +16,23 @@ public class Document {
     public Document() {
     }
 
-
-    public Document(int documentID, String name, String hashValue, String filePath, String content, Date timestamp) {
-        this.documentID = documentID; 
+    public Document(String name, String hashValue) {
         this.name = name;
-        this.hashValue = hashValue; 
-        this.filePath = filePath; 
-        this.content = content; 
-        this.timestamp = timestamp; 
+        this.hashValue = hashValue;
+        this.timestamp = new Date(); // give it a real timestamp, not null
+
     }
 
-    // ---- basic getters / setters ----
+    public Document(int documentID, String name, String hashValue, String filePath, String content, Date timestamp) {
+        this.documentID = documentID;
+        this.name = name;
+        this.hashValue = hashValue;
+        this.filePath = filePath;
+        this.content = content;
+        this.timestamp = timestamp;
+    }
+
+    // --- getters/setters ---
 
     public int getDocumentID() {
         return documentID;
@@ -76,9 +82,7 @@ public class Document {
         this.timestamp = timestamp;
     }
 
-    // ---- hash / integrity helpers ----
-
-    /** Generate a SHA-256 hash from the current content field. */
+    // ---- hash functionality unchanged ----
     public void generateHash() {
         if (content == null) {
             this.hashValue = null;
@@ -97,7 +101,6 @@ public class Document {
         }
     }
 
-    /** Recompute the hash from content and compare with stored hashValue. */
     public boolean verifyHash() {
         if (hashValue == null || content == null) {
             return false;

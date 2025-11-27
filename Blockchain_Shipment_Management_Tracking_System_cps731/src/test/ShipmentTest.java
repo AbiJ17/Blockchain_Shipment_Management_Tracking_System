@@ -1,8 +1,6 @@
 package test;
 
-
-import org.junit.jupiter.api.*;
-
+import org.junit.jupiter.api.Test;
 import model.Document;
 import model.Shipment;
 
@@ -23,9 +21,12 @@ public class ShipmentTest {
     @Test
     void testAddEvent() {
         Shipment s = new Shipment("S1", "A", "B", "Test");
+
+        int before = s.getHistory().size(); // constructor already added 1 event
         s.addEvent("CREATED");
 
-        assertEquals(1, s.getEventHistory().size());
+        assertEquals(before + 1, s.getHistory().size());
+        assertEquals("CREATED", s.getStatus()); // optional: since addEvent sets status
     }
 
     @Test
@@ -36,4 +37,3 @@ public class ShipmentTest {
         assertEquals("IN_TRANSIT", s.getStatus());
     }
 }
-

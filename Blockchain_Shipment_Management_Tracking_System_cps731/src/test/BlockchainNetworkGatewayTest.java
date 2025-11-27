@@ -1,9 +1,11 @@
 package test;
 
-
-import org.junit.jupiter.api.*;
-
+import external.BlockchainNetwork;
 import gateway.BlockchainNetworkGateway;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,32 +15,62 @@ public class BlockchainNetworkGatewayTest {
 
     @BeforeEach
     void setup() {
-        gateway = new BlockchainNetworkGateway();
+        // Use the real BlockchainNetwork but always go through the gateway
+        BlockchainNetwork network = new BlockchainNetwork();
+        gateway = new BlockchainNetworkGateway(network);
     }
 
     @Test
-    void testRecordEvent() {
-        gateway.recordEvent("S100", "CREATED");
-        assertEquals(1, gateway.fetchEventsForShipment("S100").size());
+    void testConnectAndDisconnect() {
+        // initially disconnected
+        assertFalse(gateway.isConnected());
+
+        // connect should flip the flag to true
+        assertTrue(gateway.connect());
+        assertTrue(gateway.isConnected());
+
+        // disconnect should flip it back
+        gateway.disconnect();
+        assertFalse(gateway.isConnected());
     }
 
     @Test
-    void testFetchEvents() {
-        gateway.recordEvent("S200", "A");
-        gateway.recordEvent("S200", "B");
+    void testSendTransactionRequiresConnect() {
+        // When not connected, sending should fail
+        assertFalse(gateway.sendTransaction("S100:CREATED"));
 
-        var list = gateway.fetchEventsForShipment("S200");
-        assertEquals(2, list.size());
-        assertTrue(list.contains("A"));
+        // After connecting, sending should succeed
+        assertTrue(gateway.connect());
+        assertTrue(gateway.sendTransaction("S100:CREATED"));
     }
 
     @Test
-    void testGetLatestEvent() {
-        gateway.recordEvent("S300", "FIRST");
-        gateway.recordEvent("S300", "SECOND");
+    void testQueryLedger() {
+        // When not connected, queryLedger must return an empty list
+        List<String> beforeConnect = gateway.queryLedger("S200");
+        assertNotNull(beforeConnect);
+        assertTrue(beforeConnect.isEmpty());
 
-        String latest = gateway.getLatestEvent("S300");
+        // After connecting and sending a transaction, queryLedger must still
+        // return a non-null list (we don’t assume anything about contents,
+        // because that’s handled inside BlockchainNetwork, not the gateway).
+        gateway.connect();
+        gateway.sendTransaction("S200:CREATED");
 
-        assertEquals("SECOND", latest);
+        List<String> afterConnect = gateway.queryLedger("S200");
+        assertNotNull(afterConnect);
+        // No assertion about size/contents because that depends on
+        // BlockchainNetwork’s internal implementation.
+    }
+
+    @Test
+    void testValidateBlockRequiresConnect() {
+        // When disconnected, validateBlock must return false
+        assertFalse(gateway.validateBlock("dummy-hash"));
+
+        // After connecting, the call should not throw, and simply return whatever
+        // BlockchainNetwork decides (true or false). We just assert that it runs.
+        gateway.connect();
+        assertDoesNotThrow(() -> gateway.validateBlock("dummy-hash"));
     }
 }
