@@ -16,6 +16,16 @@ public class Document {
     public Document() {
     }
 
+
+    public Document(int documentID, String name, String hashValue, String filePath, String content, Date timestamp) {
+        this.documentID = documentID; 
+        this.name = name;
+        this.hashValue = hashValue; 
+        this.filePath = filePath; 
+        this.content = content; 
+        this.timestamp = timestamp; 
+    }
+
     // ---- basic getters / setters ----
 
     public int getDocumentID() {
