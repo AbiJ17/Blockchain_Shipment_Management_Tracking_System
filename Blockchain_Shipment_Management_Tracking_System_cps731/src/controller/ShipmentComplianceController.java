@@ -5,6 +5,7 @@ import java.util.List;
 
 import gateway.BlockchainNetworkGateway;
 import gateway.OffChainStorageAdapter;
+import gateway.PaymentServiceAdapter;
 import model.Document;
 import model.Event;
 import model.Report;
@@ -15,14 +16,16 @@ public class ShipmentComplianceController {
 
     private final BlockchainNetworkGateway blockchainGateway;
     private final OffChainStorageAdapter offChainAdapter;
+    private final PaymentServiceAdapter paymentAdapter;
     private final SmartContract smartContract;
 
     public ShipmentComplianceController(BlockchainNetworkGateway blockchainGateway, 
-            OffChainStorageAdapter offChainAdapter,
+            OffChainStorageAdapter offChainAdapter, PaymentServiceAdapter paymentAdapter,
             SmartContract smartContract) {
 
         this.blockchainGateway = blockchainGateway;
         this.offChainAdapter = offChainAdapter; 
+        this.paymentAdapter = paymentAdapter;
         this.smartContract = smartContract;
     }
 

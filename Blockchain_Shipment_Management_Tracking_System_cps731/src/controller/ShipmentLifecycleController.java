@@ -6,6 +6,7 @@ import java.util.Map;
 
 import gateway.BlockchainNetworkGateway;
 import gateway.OffChainStorageAdapter;
+import gateway.PaymentServiceAdapter;
 import model.Document;
 import model.Shipment;
 import model.Shipper;
@@ -15,16 +16,18 @@ public class ShipmentLifecycleController {
 
     private final BlockchainNetworkGateway blockchainGateway;
     private final OffChainStorageAdapter offChainAdapter;
+    private final PaymentServiceAdapter paymentAdapter; 
     private final SmartContract smartContract;
 
     // In-memory store of shipments keyed by ID
     private final Map<String, Shipment> shipments = new HashMap<>();
 
     public ShipmentLifecycleController(BlockchainNetworkGateway blockchainGateway,
-            OffChainStorageAdapter offChainAdapter,
+            OffChainStorageAdapter offChainAdapter, PaymentServiceAdapter paymentAdapter,
             SmartContract smartContract) {
         this.blockchainGateway = blockchainGateway;
         this.offChainAdapter = offChainAdapter;
+        this.paymentAdapter = paymentAdapter;
         this.smartContract = smartContract;
     }
 
@@ -119,11 +122,12 @@ public class ShipmentLifecycleController {
             return "Shipment not found.";
         }
 
-        // Smart Contract validation (optional rule)
+        // Smart Contract validation: can the status move to DELIVERED?
         if (!smartContract.canUpdateStatus(shipment, "DELIVERED")) {
             return "Smart contract rejected delivery confirmation.";
         }
 
+        // Step 1 — Update shipment state
         shipment.setStatus("DELIVERED");
         shipment.addHistoryEvent("Delivery confirmed by buyer.");
 
@@ -131,7 +135,30 @@ public class ShipmentLifecycleController {
         blockchainGateway.connect();
         blockchainGateway.sendTransaction("DELIVERED#" + shipment.getShipmentID());
 
-        return "Shipment " + shipment.getShipmentID() + " marked as DELIVERED.";
+        // Step 2 — Check SmartContract for payment permission
+        if (smartContract.canTriggerPayment(shipment)) {
+
+            paymentAdapter.connect();
+
+            // Example amount = 100.00f (you may calculate differently)
+            boolean paid = paymentAdapter.processPayment(shipment, 100.00f);
+
+            if (paid) {
+                Document receipt = paymentAdapter.generateReceipt();
+                shipment.addDocument(receipt);
+                shipment.addHistoryEvent("Payment released. Receipt generated.");
+
+                return "Shipment " + shipment.getShipmentID()
+                        + " marked as DELIVERED. Payment released and receipt generated.";
+            }
+
+            return "Shipment " + shipment.getShipmentID()
+                    + " marked as DELIVERED, but payment FAILED.";
+        }
+
+        return "Shipment " + shipment.getShipmentID()
+                + " marked as DELIVERED. Payment not permitted by smart contract.";
     }
+
 
 }

@@ -32,10 +32,9 @@ public class PaymentService {
      * Returns true if "successful" (simulated).
      */
     public boolean processPayment(Shipment shipment) {
-        System.out.println("[PaymentService] Processing payment for shipment "
-                + shipment.getShipmentID());
+        // Auto-generate a simple transaction ID
+        this.transactionID = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
 
-        // Simulated payment logic
         if (amount > 0) {
             this.status = "SUCCESS";
             return true;

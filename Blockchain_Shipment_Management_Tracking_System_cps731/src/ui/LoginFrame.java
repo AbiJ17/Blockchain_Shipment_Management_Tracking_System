@@ -4,8 +4,10 @@ import controller.ShipmentComplianceController;
 import controller.ShipmentLifecycleController;
 import external.BlockchainNetwork;
 import external.OffChainStorage;
+import external.PaymentService;
 import gateway.BlockchainNetworkGateway;
 import gateway.OffChainStorageAdapter;
+import gateway.PaymentServiceAdapter;
 import model.*;
 
 import javax.swing.*;
@@ -33,6 +35,8 @@ public class LoginFrame extends JFrame {
     private final BlockchainNetworkGateway blockchainGateway;
     private final OffChainStorage offChainStorage;
     private final OffChainStorageAdapter offChainAdapter;
+    private final PaymentService paymentService; 
+    private final PaymentServiceAdapter paymentAdapter; 
     private final SmartContract smartContract;
     private static ShipmentLifecycleController lifecycleController;
     private static ShipmentComplianceController complianceController;
@@ -45,12 +49,16 @@ public class LoginFrame extends JFrame {
         offChainStorage = new OffChainStorage();
         offChainAdapter = new OffChainStorageAdapter(offChainStorage);
 
+        paymentService = new PaymentService(); 
+        paymentAdapter = new PaymentServiceAdapter(paymentService); 
+
         smartContract = new SmartContract();
 
         if (lifecycleController == null) { 
                 lifecycleController = new ShipmentLifecycleController(
                 blockchainGateway,
                 offChainAdapter,
+                paymentAdapter,
                 smartContract);
         }
 
@@ -58,6 +66,7 @@ public class LoginFrame extends JFrame {
             complianceController = new ShipmentComplianceController(
                     blockchainGateway,
                     offChainAdapter,
+                    paymentAdapter,
                     smartContract);
         }
 
@@ -328,6 +337,8 @@ public class LoginFrame extends JFrame {
                 blockchainGateway,
                 offChainStorage,
                 offChainAdapter,
+                paymentService,
+                paymentAdapter, 
                 smartContract,
                 lifecycleController,
                 complianceController));

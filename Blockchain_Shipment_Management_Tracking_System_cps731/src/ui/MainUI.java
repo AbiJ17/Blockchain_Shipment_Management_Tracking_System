@@ -4,8 +4,10 @@ import controller.ShipmentComplianceController;
 import controller.ShipmentLifecycleController;
 import external.BlockchainNetwork;
 import external.OffChainStorage;
+import external.PaymentService;
 import gateway.BlockchainNetworkGateway;
 import gateway.OffChainStorageAdapter;
+import gateway.PaymentServiceAdapter;
 import model.*;
 
 import javax.swing.*;
@@ -34,6 +36,8 @@ public class MainUI extends JFrame {
     private final BlockchainNetworkGateway blockchainGateway;
     private final OffChainStorage offChainStorage;
     private final OffChainStorageAdapter offChainAdapter;
+    private final PaymentService paymentService; 
+    private final PaymentServiceAdapter paymentAdapter; 
     private final SmartContract smartContract;
     private final ShipmentLifecycleController lifecycleController;
     private final ShipmentComplianceController complianceController;
@@ -86,6 +90,8 @@ public class MainUI extends JFrame {
             BlockchainNetworkGateway blockchainGateway,
             OffChainStorage offChainStorage,
             OffChainStorageAdapter offChainAdapter,
+            PaymentService paymentService,
+            PaymentServiceAdapter paymentAdapter,
             SmartContract smartContract,
             ShipmentLifecycleController lifecycleController,
             ShipmentComplianceController complianceController) {
@@ -95,6 +101,8 @@ public class MainUI extends JFrame {
         this.blockchainGateway = blockchainGateway;
         this.offChainStorage = offChainStorage;
         this.offChainAdapter = offChainAdapter;
+        this.paymentService = paymentService; 
+        this.paymentAdapter = paymentAdapter; 
         this.smartContract = smartContract;
         this.lifecycleController = lifecycleController;
         this.complianceController = complianceController;
@@ -931,6 +939,14 @@ public class MainUI extends JFrame {
         // Call controller
         String result = lifecycleController.confirmDelivery(shipment);
         log(result);
+        if (result.contains("Payment released")) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Payment has been processed and receipt stored.",
+                    "Payment Released",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        }
         String claimMsg = complianceController.checkInsuranceClaim(shipment);
         log(claimMsg);
         JOptionPane.showMessageDialog(this, result);
