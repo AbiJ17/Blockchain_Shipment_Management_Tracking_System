@@ -94,7 +94,7 @@ public class LoginFrame extends JFrame {
 
         // use HTML so the subtitle wraps instead of cutting off
         JLabel subtitle = new JLabel(
-                "<html>Enter your username and password to access the ledger.</html>");
+                "<html>Enter your username and password to access the ledger. <br>  - shipper/shipper <br>  - buyer/buyer <br>  - admin/admin <br>  - etc..</html>");
         subtitle.setForeground(new Color(160, 170, 210));
         subtitle.setFont(subtitle.getFont().deriveFont(13f));
         subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
