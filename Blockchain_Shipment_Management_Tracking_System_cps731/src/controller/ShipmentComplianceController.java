@@ -1,10 +1,12 @@
 package controller;
 
+import java.util.Date;
 import java.util.List;
 
 import gateway.BlockchainNetworkGateway;
 import gateway.OffChainStorageAdapter;
 import model.Document;
+import model.Event;
 import model.Report;
 import model.Shipment;
 import model.SmartContract;
@@ -37,14 +39,14 @@ public class ShipmentComplianceController {
 
     public Report generateAuditTrail(Shipment shipment) {
         if (shipment == null) {
-            return new Report("Audit Trail", "No shipment found.");
+            return new Report("Audit Trail", "No shipment found.", new Date());
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append("Audit trail for shipment ").append(shipment.getShipmentID()).append("\n\n");
 
-        List<model.Event> history = shipment.getHistory();
-        for (model.Event e : history) {
+        List<Event> history = shipment.getHistory();
+        for (Event e : history) {
             sb.append(e.getTimestamp())
                     .append("  -  ")
                     .append(e.getMessage())
@@ -54,7 +56,7 @@ public class ShipmentComplianceController {
         // Simulate querying blockchain
         blockchainGateway.queryLedger("AuditTrail#" + shipment.getShipmentID());
 
-        return new Report("Audit Trail - Shipment " + shipment.getShipmentID(), sb.toString());
+        return new Report("Audit Trail - Shipment " + shipment.getShipmentID(), sb.toString(), new Date());
     }
 
     public String logDispute(Shipment shipment, String description) {
@@ -125,7 +127,7 @@ public class ShipmentComplianceController {
         sb.append("Filter applied: ").append(filter.isEmpty() ? "None" : filter).append("\n\n");
         sb.append("Note: This is a simplified summary. Add more metrics as needed.\n");
 
-        return new Report("Compliance Report", sb.toString());
+        return new Report("Compliance Report", sb.toString(), new Date());
     }
 
 }

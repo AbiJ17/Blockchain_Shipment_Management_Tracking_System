@@ -1,5 +1,7 @@
 package model;
 
+import java.util.Date;
+
 public class Auditor extends User {
 
     private int auditID;
@@ -25,12 +27,12 @@ public class Auditor extends User {
 
     public Report generateComplianceReport() {
         // In a full system, this would inspect many shipments.
-        Report r = new Report("Compliance Report", "Auto-generated compliance summary.");
+        Report r = new Report("Compliance Report", "Auto-generated compliance summary.", new Date());
         return r;
     }
 
     public Report generateAuditTrail() {
-        Report r = new Report("Audit Trail", "Auto-generated audit trail.");
+        Report r = new Report("Audit Trail", "Auto-generated audit trail.", new Date());
         return r;
     }
 
