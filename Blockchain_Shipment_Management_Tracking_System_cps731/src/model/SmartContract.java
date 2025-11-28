@@ -157,6 +157,26 @@ public class SmartContract {
         return false;
     }
 
+    /**
+     * Generates and attaches an insurance-claim event to the shipment history.
+     * This is called only when triggerInsuranceClaim(...) returns true.
+     */
+    public Event generateInsuranceClaimEvent(Shipment shipment) {
+        if (shipment == null) { 
+            return null;
+        } 
+        // Create event message
+        String msg = "Insurance claim triggered automatically by SmartContract.";
+
+        // Create new event with timestamp + message
+        Event claimEvent = new Event(new Date(), msg);
+
+        // Attach to shipment history
+        shipment.getHistory().add(claimEvent);
+        return claimEvent;
+    }
+
+
     // ----- Getters/Setters -----
     public int getContractID() {
         return contractID;

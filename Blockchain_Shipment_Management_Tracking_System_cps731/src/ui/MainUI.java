@@ -558,6 +558,8 @@ public class MainUI extends JFrame {
 
         String result = complianceController.queryShipmentStatus(shipment);
         log("Track shipment " + shipmentId + " → " + result);
+        String claimMsg = complianceController.checkInsuranceClaim(shipment);
+        log(claimMsg);
 
         JOptionPane.showMessageDialog(this,
                 result,
@@ -735,6 +737,8 @@ public class MainUI extends JFrame {
 
         String result = lifecycleController.updateShipmentStatus(shipment, newStatus);
         log(result);
+        String claimMsg = complianceController.checkInsuranceClaim(shipment);
+        log(claimMsg);
         JOptionPane.showMessageDialog(this, result, "Status updated",
                 JOptionPane.INFORMATION_MESSAGE);
     }
@@ -926,8 +930,9 @@ public class MainUI extends JFrame {
 
         // Call controller
         String result = lifecycleController.confirmDelivery(shipment);
-
         log(result);
+        String claimMsg = complianceController.checkInsuranceClaim(shipment);
+        log(claimMsg);
         JOptionPane.showMessageDialog(this, result);
         cdShipmentIdField.setText("");
     }
@@ -1024,8 +1029,10 @@ public class MainUI extends JFrame {
         }
 
         String result = complianceController.logDispute(shipment, description);
-
         log(result);
+        String claimMsg = complianceController.checkInsuranceClaim(shipment);
+        log(claimMsg);
+
         JOptionPane.showMessageDialog(this, result);
 
         rdShipmentIdField.setText("");

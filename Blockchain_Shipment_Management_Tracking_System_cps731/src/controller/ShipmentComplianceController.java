@@ -130,4 +130,14 @@ public class ShipmentComplianceController {
         return new Report("Compliance Report", sb.toString(), new Date());
     }
 
+    public String checkInsuranceClaim(Shipment shipment) {
+        // ask smart contract if claim should be triggered automatically
+        if (smartContract.triggerInsuranceClaim(shipment)) {
+            Event e = smartContract.generateInsuranceClaimEvent(shipment);
+            blockchainGateway.sendTransaction("INSURANCE_CLAIM: " + shipment.getShipmentID() + " | " + e.getMessage());
+            return "Insurance claim AUTO-TRIGGERED for shipment " + shipment.getShipmentID();
+        }
+        return "No insurance claim needed.";
+    }
+
 }
