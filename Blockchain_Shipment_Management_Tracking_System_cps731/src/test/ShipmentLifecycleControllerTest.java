@@ -12,6 +12,8 @@ import model.SmartContract;
 import org.junit.jupiter.api.*;
 
 import controller.ShipmentLifecycleController;
+import external.PaymentService;
+import gateway.PaymentServiceAdapter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,11 +39,13 @@ public class ShipmentLifecycleControllerTest {
         BlockchainNetwork network = new BlockchainNetwork();
         BlockchainNetworkGateway gateway = new BlockchainNetworkGateway(network);
         OffChainStorage storage = new OffChainStorage();
-        OffChainStorageAdapter adapter = new OffChainStorageAdapter(storage);
+        OffChainStorageAdapter offchainAdapter = new OffChainStorageAdapter(storage);
+        PaymentService paymentService = new PaymentService(); 
+        PaymentServiceAdapter paymentAdapter = new PaymentServiceAdapter(paymentService); 
         SmartContract contract = new SmartContract();
 
         // Controller under test
-        controller = new ShipmentLifecycleController(gateway, adapter, contract);
+        controller = new ShipmentLifecycleController(gateway, offchainAdapter, paymentAdapter, contract);
 
         // A sample shipper performing the actions
         shipper = new Shipper(

@@ -4,8 +4,10 @@ import controller.ShipmentComplianceController;
 import controller.ShipmentLifecycleController;
 import external.BlockchainNetwork;
 import external.OffChainStorage;
+import external.PaymentService;
 import gateway.BlockchainNetworkGateway;
 import gateway.OffChainStorageAdapter;
+import gateway.PaymentServiceAdapter;
 import model.Report;
 import model.Shipment;
 import model.Shipper;
@@ -27,12 +29,14 @@ public class ShipmentComplianceControllerTest {
         BlockchainNetworkGateway gateway = new BlockchainNetworkGateway(network);
         OffChainStorage offChainStorage = new OffChainStorage();
         OffChainStorageAdapter offChainAdapter = new OffChainStorageAdapter(offChainStorage);
+        PaymentService paymentService = new PaymentService(); 
+        PaymentServiceAdapter paymentAdapter = new PaymentServiceAdapter(paymentService); 
         SmartContract smartContract = new SmartContract();
 
-        lifecycle = new ShipmentLifecycleController(gateway, offChainAdapter, smartContract);
+        lifecycle = new ShipmentLifecycleController(gateway, offChainAdapter, paymentAdapter, smartContract);
         // Updated to match new constructor: (BlockchainNetworkGateway,
         // OffChainStorageAdapter, SmartContract)
-        controller = new ShipmentComplianceController(gateway, offChainAdapter, smartContract);
+        controller = new ShipmentComplianceController(gateway, offChainAdapter, paymentAdapter, smartContract);
     }
 
     private Shipper makeShipper() {
