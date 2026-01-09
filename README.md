@@ -62,8 +62,7 @@ Testing focused on ensuring correctness, traceability, and system reliability.
 ---
 
 ## 📂 Project Documentation
-
-A full technical report is included in this repository and covers:
+A [full technical report](https://github.com/AbiJ17/Blockchain_Shipment_Management_Tracking_System/blob/main/Blockchain%20Shipment%20Management%20Tracking%20System.pdf) is included in this repository and covers:
 
 - Requirements analysis (functional & non-functional)  
 - System objectives and major actors  
@@ -71,9 +70,6 @@ A full technical report is included in this repository and covers:
 - Architecture and design patterns  
 - Implementation details  
 - Test plans and sample results  
-
-📄 **Project Report:**  
-`Blockchain Shipment Management Tracking System.pdf`
 
 ---
 
